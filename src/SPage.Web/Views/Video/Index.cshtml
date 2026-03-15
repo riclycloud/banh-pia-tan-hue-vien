@@ -1,0 +1,131 @@
+@using SPage.Application.Features.VideoLibrary.Queries
+@using SPage.Application.Features.VideoLibrary.DTOs
+@using SPage.Domain.Enums
+@model VideosGroupedByCategoryResult
+@{
+    ViewData["Title"] = "Thư viện Video";
+
+    string PlatformLabel(VideoPlatform p) => p switch {
+        VideoPlatform.YouTube  => "YouTube",
+        VideoPlatform.Facebook => "Facebook",
+        VideoPlatform.TikTok   => "TikTok",
+        _                      => p.ToString()
+    };
+    string PlatformBadgeClass(VideoPlatform p) => p switch {
+        VideoPlatform.YouTube  => "video-page__badge--yt",
+        VideoPlatform.Facebook => "video-page__badge--fb",
+        VideoPlatform.TikTok   => "video-page__badge--tt",
+        _                      => ""
+    };
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages.css" asp-append-version="true" />
+}
+
+<main id="main-content" class="public-page" style="margin-top: -40px;">
+    @* Hero — vàng đồng, style trang chủ *@
+    <section class="ac-hero ac-hero--video" aria-label="Thư viện Video">
+        <div class="hd-container ac-hero__inner">
+            <div class="ac-hero__left">
+                <h1 class="ac-hero__tagline" style="margin-bottom: var(--spacing-4);">
+                    Thư viện <em>Video</em>
+                </h1>
+                <p class="ac-hero__sub" style="margin-bottom: var(--spacing-6);">
+                    Xem TVC, tin tức và video theo chuyên mục
+                </p>
+                <form method="get" class="video-page__search" style="max-width: 22rem;">
+                    <div class="video-page__search-wrap">
+                        <svg class="video-page__search-icon" width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
+                        <input type="text" name="q" value="@Context.Request.Query["q"]"
+                               placeholder="Tìm kiếm video..."
+                               class="video-page__search-input" autocomplete="off" />
+                    </div>
+                </form>
+            </div>
+            <div class="ac-hero__right" aria-hidden="true">
+                <div class="ac-hero__deco-circle ac-hero__deco-circle--1"></div>
+                <div class="ac-hero__deco-circle ac-hero__deco-circle--2"></div>
+                <div class="video-page__hero-icon">
+                    <svg width="120" height="80" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="1" viewBox="0 0 24 24">
+                        <path d="M15 10l4.553-2.069A1 1 0 0121 8.82v6.36a1 1 0 01-1.447.893L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+        <div class="ac-wave" aria-hidden="true">
+            <svg viewBox="0 0 1440 100" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+                <path fill="#ffffff" d="M0,60 C240,110 480,10 720,60 C960,110 1200,20 1440,60 L1440,100 L0,100 Z"/>
+            </svg>
+        </div>
+    </section>
+
+    @if (!Model.Sections.Any())
+    {
+        <section class="ac-section">
+            <div class="hd-container text-center py-5">
+                <div class="video-page__empty">
+                    <svg width="80" height="80" fill="none" stroke="var(--color-text-muted)" stroke-width="1" viewBox="0 0 24 24" class="opacity-50 mb-3">
+                        <path d="M15 10l4.553-2.069A1 1 0 0121 8.82v6.36a1 1 0 01-1.447.893L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                    </svg>
+                    <p class="text-muted mb-0">Chưa có video nào. Hãy quay lại sau.</p>
+                </div>
+            </div>
+        </section>
+    }
+    else
+    {
+        @foreach (var group in Model.Sections)
+        {
+            <section class="ac-section video-page__section" aria-labelledby="section-@group.Category.Id">
+                <div class="hd-container">
+                    <h2 id="section-@group.Category.Id" class="ac-section-title ac-section-title--red">
+                        <a href="/video/@group.Category.Slug" class="video-page__section-link">@group.Category.Name</a>
+                        <span class="video-page__section-count">@group.Videos.Count video</span>
+                    </h2>
+
+                    <div class="video-page__grid">
+                        @foreach (var v in group.Videos)
+                        {
+                            <a href="/video/@v.Slug" class="video-page__card"
+                               itemprop="video" itemscope itemtype="https://schema.org/VideoObject">
+                                <meta itemprop="name" content="@v.Title"/>
+                                <meta itemprop="thumbnailUrl" content="@v.ThumbnailUrl"/>
+                                @if (v.PublishedAt.HasValue)
+                                { <meta itemprop="uploadDate" content="@v.PublishedAt.Value.ToString("O")"/> }
+
+                                <div class="video-page__card-img-wrap">
+                                    <img src="@v.ThumbnailUrl" alt="@v.Title" class="video-page__card-img" loading="lazy"
+                                         onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 16 9%22 fill=%22%23eee%22%3E%3C/svg%3E'" />
+                                    <div class="video-page__card-overlay">
+                                        <span class="video-page__play-btn" aria-hidden="true">
+                                            <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7L8 5z"/></svg>
+                                        </span>
+                                    </div>
+                                    <span class="video-page__badge @PlatformBadgeClass(v.Platform)">@PlatformLabel(v.Platform)</span>
+                                    @if (v.IsFeatured)
+                                    {
+                                        <span class="video-page__featured" aria-hidden="true">★</span>
+                                    }
+                                </div>
+                                <div class="video-page__card-body">
+                                    <h3 class="video-page__card-title">@v.Title</h3>
+                                    <div class="video-page__card-meta">
+                                        @if (v.PublishedAt.HasValue)
+                                        {
+                                            <time datetime="@v.PublishedAt.Value.ToString("O")">@v.PublishedAt.Value.ToString("dd/MM/yyyy")</time>
+                                            <span> · </span>
+                                        }
+                                        <span>@v.ViewCount.ToString("N0") lượt xem</span>
+                                    </div>
+                                </div>
+                            </a>
+                        }
+                    </div>
+                </div>
+            </section>
+        }
+    }
+</main>

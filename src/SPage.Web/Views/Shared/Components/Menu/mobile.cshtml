@@ -1,0 +1,37 @@
+@model IEnumerable<SPage.Domain.Entities.Navigation.MenuItem>
+
+@foreach (var item in Model)
+{
+    var hasChildren = item.Children != null && item.Children.Any(c => c.IsActive);
+
+    if (hasChildren)
+    {
+        <details class="mobile-nav-group">
+            <summary>
+                @item.Title
+                <span class="mobile-nav-group__arrow">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="m6 9 6 6 6-6"/>
+                    </svg>
+                </span>
+            </summary>
+            <div class="mobile-nav-sub">
+                @foreach (var child in item.Children!.OrderBy(c => c.SortOrder).Where(c => c.IsActive))
+                {
+                    <a href="@child.Url" class="mobile-nav-sub__link"
+                       @(child.OpenInNewTab ? Html.Raw("target=\"_blank\" rel=\"noopener\"") : Html.Raw(""))>
+                        @child.Title
+                    </a>
+                }
+            </div>
+        </details>
+    }
+    else
+    {
+        <a href="@item.Url" class="mobile-menu__link"
+           @(item.OpenInNewTab ? Html.Raw("target=\"_blank\" rel=\"noopener\"") : Html.Raw(""))>
+            @item.Title
+        </a>
+    }
+}

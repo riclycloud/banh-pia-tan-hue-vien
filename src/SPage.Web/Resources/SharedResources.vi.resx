@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+
+  <!-- Navigation -->
+  <data name="Nav_Home"><value>Trang chủ</value></data>
+  <data name="Nav_Blog"><value>Tin tức</value></data>
+  <data name="Nav_Products"><value>Sản phẩm</value></data>
+  <data name="Nav_About"><value>Giới thiệu</value></data>
+  <data name="Nav_Contact"><value>Liên hệ</value></data>
+
+  <!-- Posts -->
+  <data name="Posts_PageTitle"><value>Tin tức &amp; Blog</value></data>
+  <data name="Posts_Heading"><value>Tin tức mới nhất</value></data>
+  <data name="Posts_ReadMore"><value>Đọc tiếp</value></data>
+  <data name="Posts_PublishedOn"><value>Đăng ngày {0}</value></data>
+  <data name="Posts_Category"><value>Chuyên mục</value></data>
+  <data name="Posts_Tags"><value>Thẻ</value></data>
+  <data name="Posts_Author"><value>Tác giả</value></data>
+  <data name="Posts_ViewCount"><value>{0} lượt xem</value></data>
+  <data name="Posts_Search"><value>Tìm kiếm bài viết...</value></data>
+  <data name="Posts_NoResults"><value>Không tìm thấy bài viết nào.</value></data>
+
+  <!-- Products -->
+  <data name="Products_PageTitle"><value>Sản phẩm</value></data>
+  <data name="Products_Heading"><value>Danh sách sản phẩm</value></data>
+  <data name="Products_Price"><value>Giá</value></data>
+  <data name="Products_SalePrice"><value>Giá khuyến mãi</value></data>
+  <data name="Products_AddToCart"><value>Thêm vào giỏ</value></data>
+  <data name="Products_OutOfStock"><value>Hết hàng</value></data>
+  <data name="Products_NoResults"><value>Không có sản phẩm nào.</value></data>
+  <data name="Products_SortBy"><value>Sắp xếp theo</value></data>
+  <data name="Products_Sort_Newest"><value>Mới nhất</value></data>
+  <data name="Products_Sort_PriceAsc"><value>Giá tăng dần</value></data>
+  <data name="Products_Sort_PriceDesc"><value>Giá giảm dần</value></data>
+  <data name="Products_Sort_NameAsc"><value>Tên A-Z</value></data>
+
+  <!-- Pagination -->
+  <data name="Pagination_Label"><value>Phân trang</value></data>
+  <data name="Pagination_Prev"><value>Trang trước</value></data>
+  <data name="Pagination_Next"><value>Trang sau</value></data>
+  <data name="Pagination_Page"><value>Trang {0} / {1}</value></data>
+
+  <!-- Common -->
+  <data name="Home"><value>Trang chủ</value></data>
+  <data name="Search"><value>Tìm kiếm</value></data>
+  <data name="Submit"><value>Gửi</value></data>
+  <data name="Cancel"><value>Hủy</value></data>
+  <data name="Save"><value>Lưu</value></data>
+  <data name="Delete"><value>Xóa</value></data>
+  <data name="Edit"><value>Chỉnh sửa</value></data>
+  <data name="Back"><value>Quay lại</value></data>
+  <data name="Loading"><value>Đang tải...</value></data>
+  <data name="Error_NotFound"><value>Không tìm thấy trang yêu cầu.</value></data>
+  <data name="Error_Generic"><value>Đã xảy ra lỗi. Vui lòng thử lại.</value></data>
+  <data name="Footer_Copyright"><value>SPage CMS. Bảo lưu mọi quyền.</value></data>
+
+  <!-- Language -->
+  <data name="Language_Vietnamese"><value>Tiếng Việt</value></data>
+  <data name="Language_English"><value>English</value></data>
+  <data name="Language_SwitchTo"><value>Chuyển sang</value></data>
+
+  <!-- Contact -->
+  <data name="Contact_Heading"><value>Liên hệ với chúng tôi</value></data>
+  <data name="Contact_Name"><value>Họ và tên</value></data>
+  <data name="Contact_Email"><value>Email</value></data>
+  <data name="Contact_Phone"><value>Số điện thoại</value></data>
+  <data name="Contact_Message"><value>Nội dung</value></data>
+  <data name="Contact_Send"><value>Gửi tin nhắn</value></data>
+  <data name="Contact_Success"><value>Tin nhắn đã được gửi thành công!</value></data>
+
+  <!-- Validation -->
+  <data name="Validation_Required"><value>Trường này là bắt buộc.</value></data>
+  <data name="Validation_Email"><value>Email không hợp lệ.</value></data>
+  <data name="Validation_MaxLength"><value>Tối đa {0} ký tự.</value></data>
+  <data name="Validation_MinLength"><value>Tối thiểu {0} ký tự.</value></data>
+  <data name="Accessibility_SkipToContent"><value>Bỏ qua đến nội dung chính</value></data>
+  <data name="Brand_Name"><value>SPage</value></data>
+</root>

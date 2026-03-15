@@ -1,0 +1,88 @@
+@model IEnumerable<SPage.Areas.Admin.Controllers.UserListItemViewModel>
+@{
+ ViewData["Title"] = "Người dùng";
+}
+
+@* ── Page Header ──────────────────────────────────────────────────────────── *@
+<div class="flex items-center justify-between mb-5">
+ <div>
+ <h1 class="text-xl font-bold text-slate-800">Người dùng</h1>
+ <p class="text-sm text-slate-500 mt-0.5">Quản lý tài khoản và phân quyền Admin / ContentManager.</p>
+ </div>
+ <a asp-action="Edit" asp-route-id="0"
+ class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-colors shadow-sm">
+ <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+ <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+ </svg>
+ Thêm người dùng
+ </a>
+</div>
+
+@* ── Table ─────────────────────────────────────────────────────────────────── *@
+<div class="rounded-2xl overflow-hidden border border-slate-200 shadow-sm bg-white">
+ <table class="w-full text-sm text-left">
+ <thead>
+ <tr>
+ <th class="bg-slate-50 px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-slate-500 border-b border-slate-200">Email</th>
+ <th class="bg-slate-50 px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-slate-500 border-b border-slate-200 hidden sm:table-cell">Họ tên</th>
+ <th class="bg-slate-50 px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-slate-500 border-b border-slate-200">Vai trò</th>
+ <th class="bg-slate-50 px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-slate-500 border-b border-slate-200 text-center">Trạng thái</th>
+ <th class="bg-slate-50 px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-slate-500 border-b border-slate-200 hidden md:table-cell">Ngày tạo</th>
+ <th class="bg-slate-50 px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-slate-500 border-b border-slate-200 text-right">Thao tác</th>
+ </tr>
+ </thead>
+ <tbody>
+ @foreach (var u in Model)
+ {
+ <tr class="border-b border-slate-100 hover:bg-slate-50/60 transition-colors">
+ <td class="px-4 py-3 font-medium text-slate-800">@u.Email</td>
+ <td class="px-4 py-3 text-slate-600 hidden sm:table-cell">@(u.FullName ?? "—")</td>
+ <td class="px-4 py-3 text-slate-600">
+ @if (u.Roles.Any())
+ {
+ @string.Join(", ", u.Roles)
+ }
+ else
+ {
+ <span class="text-xs text-slate-400">Không có</span>
+ }
+ </td>
+ <td class="px-4 py-3 text-center">
+ @if (u.IsActive)
+ {
+ <span class="px-2.5 py-0.5 text-xs font-medium rounded-full bg-emerald-100 text-emerald-700">Hoạt động</span>
+ }
+ else
+ {
+ <span class="px-2.5 py-0.5 text-xs font-medium rounded-full bg-slate-100 text-slate-600">Khóa</span>
+ }
+ </td>
+ <td class="px-4 py-3 text-slate-500 text-[13px] hidden md:table-cell">@u.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+ <td class="px-4 py-3 text-right">
+ <a asp-action="Edit" asp-route-id="@u.Id"
+ class="inline-flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 px-2.5 py-1.5 rounded-lg transition-colors">
+ <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+ <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232 18.768 8.768M4 20h4l10-10-4-4L4 16v4z"/>
+ </svg>
+ Sửa
+ </a>
+ </td>
+ </tr>
+ }
+
+ @if (!Model.Any())
+ {
+ <tr>
+ <td colspan="6" class="px-4 py-12 text-center">
+ <div class="flex flex-col items-center gap-2 text-slate-400">
+ <svg class="w-10 h-10 opacity-40" fill="currentColor" viewBox="0 0 20 18">
+ <path d="M14 2a3.963 3.963 0 0 0-1.4.267 6.439 6.439 0 0 1-1.331 6.638A4 4 0 1 0 14 2Zm1 9h-1.264A6.957 6.957 0 0 1 15 15v2a2.97 2.97 0 0 1-.184 1H19a1 1 0 0 0 1-1v-1a5.006 5.006 0 0 0-5-5ZM6.5 9a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9ZM8 10H5a5.006 5.006 0 0 0-5 5v1a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-1a5.006 5.006 0 0 0-5-5Z"/>
+ </svg>
+ <p class="text-sm">Chưa có người dùng nào.</p>
+ </div>
+ </td>
+ </tr>
+ }
+ </tbody>
+ </table>
+</div>

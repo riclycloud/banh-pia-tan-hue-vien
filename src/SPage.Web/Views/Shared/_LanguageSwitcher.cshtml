@@ -1,0 +1,43 @@
+@using Microsoft.AspNetCore.Http
+@inject IHttpContextAccessor HttpContextAccessor
+@{
+    var currentCulture = System.Globalization.CultureInfo.CurrentCulture.Name;
+    var isVi = currentCulture.StartsWith("vi");
+}
+
+@* Google Translate custom widget — chỉ hiện ngôn ngữ khác, ẩn ngôn ngữ hiện tại *@
+<div class="gt-widget notranslate" id="gt-widget" role="navigation" aria-label="Chuyển ngôn ngữ" translate="no">
+    <button class="gt-trigger" id="gt-trigger" aria-haspopup="listbox" aria-expanded="false" aria-label="Chọn ngôn ngữ">
+        <span class="gt-flag" id="gt-current-flag">🇻🇳</span>
+        <span class="gt-label" id="gt-current-label">VI</span>
+        <svg class="gt-chevron" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+    </button>
+    <ul class="gt-dropdown" id="gt-dropdown" role="listbox" aria-label="Danh sách ngôn ngữ">
+        <li class="gt-option" data-lang="vi" data-gt="auto|vi" role="option">
+            <span class="gt-option__flag">🇻🇳</span>
+            <span class="gt-option__name">Tiếng Việt</span>
+        </li>
+        <li class="gt-option" data-lang="en" data-gt="vi|en" role="option">
+            <span class="gt-option__flag">🇬🇧</span>
+            <span class="gt-option__name">English</span>
+        </li>
+        <li class="gt-option" data-lang="zh-CN" data-gt="vi|zh-CN" role="option">
+            <span class="gt-option__flag">🇨🇳</span>
+            <span class="gt-option__name">中文</span>
+        </li>
+        <li class="gt-option" data-lang="ja" data-gt="vi|ja" role="option">
+            <span class="gt-option__flag">🇯🇵</span>
+            <span class="gt-option__name">日本語</span>
+        </li>
+        <li class="gt-option" data-lang="ko" data-gt="vi|ko" role="option">
+            <span class="gt-option__flag">🇰🇷</span>
+            <span class="gt-option__name">한국어</span>
+        </li>
+        <li class="gt-option" data-lang="fr" data-gt="vi|fr" role="option">
+            <span class="gt-option__flag">🇫🇷</span>
+            <span class="gt-option__name">Français</span>
+        </li>
+    </ul>
+    @* Hidden Google Translate element *@
+    <div id="google_translate_element" style="display:none" aria-hidden="true"></div>
+</div>

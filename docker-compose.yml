@@ -1,0 +1,18 @@
+# SPage — Web (.NET 8) + SQL Server 2022
+# Chạy: docker compose up -d
+# SQL Server chạy trên máy (localhost). Web trong container kết nối qua host.docker.internal
+# Lần đầu: áp dụng migration (từ máy host): dotnet ef database update --project src/SPage.Web --startup-project src/SPage.Web
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: spage-web:latest
+    ports:
+      - "5000:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: "http://+:8080"
+      ConnectionStrings__DefaultConnection: "Server=host.docker.internal;Database=banhpia_tanhuevien;User Id=sa;Password=!VN@12345;TrustServerCertificate=True;MultipleActiveResultSets=True"
+    restart: unless-stopped
+

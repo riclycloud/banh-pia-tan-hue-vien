@@ -1,0 +1,436 @@
+@model SPage.Areas.Admin.Controllers.SectionTemplateFormModel
+@{
+    var isEdit = Model.Id > 0;
+    ViewData["Title"] = isEdit ? "Sửa template" : "Thêm template mới";
+}
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.17/codemirror.min.css">
+<link rel="stylesheet" href="https://cdn.quilljs.com/1.3.7/quill.snow.css">
+<style>
+    .CodeMirror { height: 200px; font-size: 12.5px; border: 1px solid #e2e8f0; border-radius: 0.5rem; }
+    .ql-container.ql-snow { border-radius: 0 0 0.5rem 0.5rem; min-height: 120px; border-color: #e2e8f0; }
+    .ql-toolbar.ql-snow  { border-radius: 0.5rem 0.5rem 0 0; border-color: #e2e8f0; background: #f8fafc; }
+    .ql-editor { min-height: 120px; }
+    .btn-upload { padding: 3px 8px; font-size: 11px; border: 1px solid #bfdbfe; border-radius: 6px; background: white; color: #2563eb; cursor: pointer; white-space: nowrap; }
+    .btn-upload:hover { background: #eff6ff; }
+</style>
+
+@* Breadcrumb *@
+<div class="flex items-center gap-2 mb-5 text-sm">
+    <a asp-action="Index" class="text-slate-400 hover:text-blue-600 transition-colors">Thư viện Section</a>
+    <svg class="w-3.5 h-3.5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m9 18 6-6-6-6"/>
+    </svg>
+    <span class="text-slate-600 font-medium">@(isEdit ? "Sửa template" : "Thêm mới")</span>
+</div>
+
+<form asp-action="@(isEdit ? "Edit" : "Create")" asp-route-id="@(isEdit ? Model.Id : 0)" method="post" id="tpl-form">
+    @Html.AntiForgeryToken()
+
+    <div class="grid grid-cols-1 gap-5 lg:grid-cols-3">
+
+        @* ── Main column ── *@
+        <div class="lg:col-span-2 space-y-4">
+
+            @* Template metadata *@
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-4">
+                <h3 class="text-sm font-semibold text-slate-700">Thông tin template</h3>
+
+                <div>
+                    <label asp-for="Name" class="block mb-1.5 text-[13px] font-medium text-slate-600">
+                        Tên template <span class="text-red-500">*</span>
+                    </label>
+                    <input asp-for="Name" placeholder="e.g. Hero trang chủ, Gallery sản phẩm..."
+                           class="block w-full px-3 py-2.5 text-sm bg-white border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" />
+                    <span asp-validation-for="Name" class="text-xs text-red-500 mt-1 block"></span>
+                </div>
+
+                <div>
+                    <label asp-for="Description" class="block mb-1.5 text-[13px] font-medium text-slate-600">Mô tả (tùy chọn)</label>
+                    <input asp-for="Description" placeholder="Mô tả ngắn về template này..."
+                           class="block w-full px-3 py-2.5 text-sm bg-white border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" />
+                </div>
+
+                <div>
+                    <label asp-for="CssClass" class="block mb-1.5 text-[13px] font-medium text-slate-600">CSS Class mặc định</label>
+                    <input asp-for="CssClass" placeholder="e.g. py-16 bg-white"
+                           class="block w-full px-3 py-2.5 text-sm bg-white border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors font-mono" />
+                </div>
+            </div>
+
+            @* Mini section editor *@
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+                <h3 class="text-sm font-semibold text-slate-700 mb-4">Nội dung section</h3>
+
+                @* Type selector *@
+                <div class="mb-4">
+                    <label class="block mb-1.5 text-[13px] font-medium text-slate-600">
+                        Loại section <span class="text-red-500">*</span>
+                    </label>
+                    <div class="grid grid-cols-3 sm:grid-cols-5 gap-2" id="type-picker">
+                        @foreach (var (type, color) in new[] {
+                            ("Hero","violet"), ("Gallery","violet"), ("ContactForm","violet"),
+                            ("ProductList","violet"), ("Testimonials","violet"),
+                            ("TextBlock","green"), ("RichText","green"),
+                            ("RawHtml","sky"), ("CssBlock","sky"), ("JsBlock","sky")
+                        })
+                        {
+                            <button type="button" class="type-btn px-2 py-1.5 rounded-lg text-xs font-medium border transition-colors
+                                @(Model.SectionType == type
+                                    ? $"bg-{color}-600 text-white border-{color}-600"
+                                    : $"border-slate-200 text-slate-600 hover:border-{color}-300 hover:text-{color}-700 hover:bg-{color}-50")"
+                                    data-type="@type" data-color="@color">
+                                @type
+                            </button>
+                        }
+                    </div>
+                    <input type="hidden" asp-for="SectionType" id="selected-type" />
+                    <span asp-validation-for="SectionType" class="text-xs text-red-500 mt-1 block"></span>
+                </div>
+
+                @* Dynamic editor area — built by JS *@
+                <div id="mini-editor" class="mt-4"></div>
+
+                @* Hidden DataJson *@
+                <input type="hidden" asp-for="DataJson" id="DataJson" />
+            </div>
+        </div>
+
+        @* ── Sidebar ── *@
+        <div class="space-y-4">
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+                <h3 class="text-sm font-semibold text-slate-700 mb-4">Lưu template</h3>
+                <div class="flex gap-2">
+                    <button type="submit"
+                            class="flex-1 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-colors shadow-sm">
+                        @(isEdit ? "Cập nhật" : "Lưu template")
+                    </button>
+                    <a asp-action="Index"
+                       class="px-4 py-2 text-sm font-medium text-slate-600 bg-slate-100 rounded-xl hover:bg-slate-200 transition-colors">
+                        Hủy
+                    </a>
+                </div>
+            </div>
+
+            @if (isEdit)
+            {
+                <div class="bg-red-50 border border-red-100 rounded-2xl p-4">
+                    <h4 class="text-xs font-semibold text-red-600 uppercase tracking-wide mb-3">Xóa template</h4>
+                    <form asp-action="Delete" asp-route-id="@Model.Id" method="post"
+                          onsubmit="return confirm('Xóa template này?')">
+                        @Html.AntiForgeryToken()
+                        <button type="submit"
+                                class="w-full px-4 py-2 text-sm font-medium text-red-600 border border-red-200 bg-white rounded-xl hover:bg-red-50 transition-colors">
+                            Xóa template
+                        </button>
+                    </form>
+                </div>
+            }
+
+            @* Preview card *@
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4">
+                <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Loại đã chọn</h4>
+                <p id="preview-type" class="text-sm font-medium text-slate-700">
+                    @(string.IsNullOrWhiteSpace(Model.SectionType) ? "Chưa chọn" : Model.SectionType)
+                </p>
+            </div>
+        </div>
+    </div>
+</form>
+
+@section Scripts {
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.17/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.17/mode/xml/xml.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.17/mode/css/css.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.17/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.17/mode/htmlmixed/htmlmixed.min.js"></script>
+<script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
+
+<script>
+(function() {
+    'use strict';
+
+    // ── Shared component definitions (keep in sync with Edit.cshtml) ────────────
+    var COMPONENT_FIELDS = {
+        Hero: [
+            { key: 'heading',    label: 'Tiêu đề chính', type: 'text',     span: 2, placeholder: 'Nhập tiêu đề hero...' },
+            { key: 'subheading', label: 'Mô tả phụ',      type: 'textarea', span: 2, placeholder: 'Nhập mô tả ngắn...' },
+            { key: 'buttonText', label: 'Nhãn nút CTA',   type: 'text',     span: 1, placeholder: 'Xem thêm' },
+            { key: 'buttonUrl',  label: 'URL nút CTA',    type: 'text',     span: 1, placeholder: '/lien-he' }
+        ],
+        ProductList: [
+            { key: 'title',      label: 'Tiêu đề section', type: 'text',   span: 2, placeholder: 'Sản phẩm nổi bật' },
+            { key: 'categoryId', label: 'ID danh mục',     type: 'text',   span: 1, placeholder: '' },
+            { key: 'limit',      label: 'Số sản phẩm',    type: 'number', span: 1, placeholder: '6' }
+        ]
+    };
+
+    var REPEATABLE_COMPONENTS = {
+        Gallery: {
+            headerFields: [{ key: 'title', label: 'Tiêu đề gallery', type: 'text', span: 2, placeholder: 'Thư viện ảnh' }],
+            itemFields: [
+                { key: 'image', label: 'URL ảnh',  type: 'text', span: 1, placeholder: '/images/anh.jpg', hasUpload: true },
+                { key: 'alt',   label: 'Alt text', type: 'text', span: 1, placeholder: 'Mô tả ảnh' }
+            ],
+            itemLabel: 'Ảnh', addLabel: '+ Thêm ảnh',
+            keyFn: function(fkey, i) { return fkey + i; }
+        },
+        Testimonials: {
+            headerFields: [{ key: 'title', label: 'Tiêu đề section', type: 'text', span: 2, placeholder: 'Khách hàng nói gì...' }],
+            itemFields: [
+                { key: 'name',    label: 'Tên',       type: 'text',     span: 1, placeholder: 'Nguyễn Văn A' },
+                { key: 'role',    label: 'Chức vụ',   type: 'text',     span: 1, placeholder: 'Giám đốc' },
+                { key: 'content', label: 'Nhận xét',  type: 'textarea', span: 2, placeholder: 'Nhận xét...' }
+            ],
+            itemLabel: 'Khách hàng', addLabel: '+ Thêm khách hàng',
+            keyFn: function(fkey, i) { return 'item' + i + '_' + fkey; }
+        },
+        ContactForm: {
+            headerFields: [
+                { key: 'title',         label: 'Tiêu đề form',   type: 'text', span: 2, placeholder: 'Liên hệ với chúng tôi' },
+                { key: 'submitUrl',     label: 'Submit URL',      type: 'text', span: 1, placeholder: '/api/contact' },
+                { key: 'submitBtnText', label: 'Nhãn nút Submit', type: 'text', span: 1, placeholder: 'Gửi' }
+            ],
+            itemFields: [
+                { key: 'label',      label: 'Nhãn field',   type: 'text',   span: 1, placeholder: 'Họ và tên' },
+                { key: 'name',       label: 'Name (HTML)',  type: 'text',   span: 1, placeholder: 'fullname' },
+                { key: 'type',       label: 'Loại',         type: 'select', span: 1,
+                  options: [{ value:'text',label:'Text'},{value:'email',label:'Email'},{value:'tel',label:'Phone'},{value:'textarea',label:'Textarea'},{value:'select',label:'Dropdown'}]},
+                { key: 'required',    label: 'Bắt buộc',    type: 'checkbox', span: 1 },
+                { key: 'placeholder', label: 'Placeholder', type: 'text',     span: 2, placeholder: 'Nhập...' },
+                { key: 'options',     label: 'Tùy chọn',   type: 'textarea', span: 2, placeholder: 'Hà Nội\nTP.HCM', showWhen: { field:'type', value:'select' }}
+            ],
+            itemLabel: 'Field', addLabel: '+ Thêm field',
+            keyFn: function(fkey, i) { return 'field' + i + '_' + fkey; }
+        }
+    };
+
+    function isCodeType(t) { return t==='RawHtml'||t==='CssBlock'||t==='JsBlock'; }
+    function isRichType(t) { return t==='TextBlock'||t==='RichText'; }
+    function isComponentType(t) { return !!COMPONENT_FIELDS[t]; }
+    function isRepeatableType(t) { return !!REPEATABLE_COMPONENTS[t]; }
+    function codeMode(t) { return t==='CssBlock'?'css':t==='JsBlock'?'javascript':'htmlmixed'; }
+    function codeKey(t)  { return t==='CssBlock'?'css':t==='JsBlock'?'js':'html'; }
+
+    function esc(s) {
+        if (s==null) return '';
+        return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function csrfToken() {
+        var el = document.querySelector('input[name="__RequestVerificationToken"]');
+        return el ? el.value : '';
+    }
+
+    function uploadImage(urlInput) {
+        var fi = document.createElement('input'); fi.type='file'; fi.accept='image/*';
+        fi.onchange = function() {
+            if (!fi.files[0]) return;
+            var fd = new FormData(); fd.append('file', fi.files[0]);
+            fetch('/admin/upload/image', { method:'POST', headers:{'RequestVerificationToken':csrfToken()}, body:fd })
+                .then(function(r) { return r.ok ? r.json() : Promise.reject(r.status); })
+                .then(function(d) { if (d.url) { urlInput.value = d.url; urlInput.dispatchEvent(new Event('input')); }})
+                .catch(function() { alert('Upload thất bại.'); });
+        };
+        fi.click();
+    }
+
+    var INPUT_CLS = 'comp-field block w-full px-2 py-1.5 text-xs border border-slate-200 rounded-lg bg-white text-slate-700 focus:ring-1 focus:ring-blue-400 focus:outline-none transition-colors';
+
+    function appendField(parent, f, val, extraCls) {
+        var div = document.createElement('div');
+        div.className = f.span===2 ? 'col-span-2' : '';
+        if (f.showWhen) { div.setAttribute('data-show-when-field', f.showWhen.field); div.setAttribute('data-show-when-value', f.showWhen.value); div.style.display='none'; }
+        var cls = INPUT_CLS + (extraCls?' '+extraCls:'');
+        if (f.type==='checkbox') {
+            var chk = val==='1'||val===true;
+            div.innerHTML = '<label class="block text-[11px] font-medium text-slate-500 mb-1">'+esc(f.label)+'</label><label class="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" class="'+cls+' w-3.5 h-3.5 accent-blue-600" data-key="'+esc(f.key)+'"'+(chk?' checked':'')+'><span class="text-[11px] text-slate-600">Có</span></label>';
+            parent.appendChild(div); return div;
+        }
+        var inputHtml;
+        if (f.type==='textarea') {
+            inputHtml = '<textarea class="'+cls+' resize-y min-h-[55px]" data-key="'+esc(f.key)+'" placeholder="'+esc(f.placeholder||'')+'">'+esc(val)+'</textarea>';
+        } else if (f.type==='select') {
+            inputHtml = '<select class="'+cls+'" data-key="'+esc(f.key)+'">'+(f.options||[]).map(function(o){return '<option value="'+esc(o.value)+'"'+(o.value===val?' selected':'')+'>'+esc(o.label)+'</option>';}).join('')+'</select>';
+        } else {
+            inputHtml = '<input type="'+(f.type==='number'?'number':'text')+'" class="'+cls+'" data-key="'+esc(f.key)+'" value="'+esc(val)+'" placeholder="'+esc(f.placeholder||'')+'">';
+        }
+        if (f.hasUpload) {
+            var flexCls = cls.replace('block w-full','flex-1').trim();
+            div.innerHTML = '<label class="block text-[11px] font-medium text-slate-500 mb-1">'+esc(f.label)+'</label><div class="flex gap-1">'+inputHtml.replace(cls, flexCls)+'<button type="button" class="btn-upload shrink-0" title="Upload">📎</button></div>';
+            div.querySelector('.btn-upload').addEventListener('click', function() { var inp=div.querySelector('[data-key]'); if(inp) uploadImage(inp); });
+        } else {
+            div.innerHTML = '<label class="block text-[11px] font-medium text-slate-500 mb-1">'+esc(f.label)+'</label>'+inputHtml;
+        }
+        parent.appendChild(div); return div;
+    }
+
+    function wireShowWhen(container) {
+        container.querySelectorAll('[data-show-when-field]').forEach(function(el) {
+            var tKey = el.getAttribute('data-show-when-field');
+            var tVal = el.getAttribute('data-show-when-value');
+            var trigger = container.querySelector('[data-key="'+tKey+'"]');
+            if (!trigger) return;
+            function upd() { el.style.display = trigger.value===tVal?'':'none'; }
+            trigger.addEventListener('change', upd); trigger.addEventListener('input', upd); upd();
+        });
+    }
+
+    function extractRptItems(data, cfg) {
+        var items = [];
+        if (!data) return items;
+        for (var i=1;;i++) {
+            var found=false, item={};
+            cfg.itemFields.forEach(function(f){ var k=cfg.keyFn(f.key,i); if(data[k]!==undefined){found=true;item[f.key]=data[k];}else{item[f.key]='';} });
+            if (!found) break;
+            items.push(item);
+        }
+        return items;
+    }
+
+    function buildRptItemCard(itemData, cfg, onChange) {
+        var card = document.createElement('div');
+        card.className = 'rpt-item border border-slate-100 rounded-lg p-2.5 bg-slate-50 relative';
+        var delBtn = document.createElement('button'); delBtn.type='button';
+        delBtn.className = 'absolute top-2 right-2 w-5 h-5 flex items-center justify-center text-red-400 hover:text-red-600 rounded';
+        delBtn.innerHTML = '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>';
+        delBtn.addEventListener('click', function(){ card.remove(); onChange(); });
+        card.appendChild(delBtn);
+        var grid = document.createElement('div'); grid.className='grid grid-cols-2 gap-2 pr-6';
+        cfg.itemFields.forEach(function(f){ appendField(grid, f, itemData[f.key]||'', 'rpt-item-field'); });
+        card.appendChild(grid);
+        grid.querySelectorAll('[data-key]').forEach(function(el){ el.addEventListener('input', onChange); el.addEventListener('change', onChange); });
+        wireShowWhen(grid);
+        return card;
+    }
+
+    // ── State ───────────────────────────────────────────────────────────────────
+    var currentType  = '';
+    var currentData  = {};
+    var _cm = null, _quill = null;
+    var editorEl     = document.getElementById('mini-editor');
+    var dataJsonEl   = document.getElementById('DataJson');
+    var typeInputEl  = document.getElementById('selected-type');
+    var previewTypeEl= document.getElementById('preview-type');
+
+    // Load initial data
+    try { currentData = JSON.parse(dataJsonEl.value || '{}'); } catch(e) { currentData = {}; }
+    currentType = typeInputEl.value || '';
+
+    function readData() {
+        if (isCodeType(currentType) && _cm) {
+            currentData = {}; currentData[codeKey(currentType)] = _cm.getValue();
+        } else if (isRichType(currentType) && _quill) {
+            currentData = { content: _quill.root.innerHTML };
+        } else if (isComponentType(currentType)) {
+            currentData = {};
+            editorEl.querySelectorAll('.comp-field[data-key]').forEach(function(el){
+                currentData[el.getAttribute('data-key')] = el.type==='checkbox'?(el.checked?'1':''):el.value;
+            });
+        } else if (isRepeatableType(currentType)) {
+            currentData = {};
+            var cfg = REPEATABLE_COMPONENTS[currentType];
+            editorEl.querySelectorAll('.rpt-header-field[data-key]').forEach(function(el){
+                currentData[el.getAttribute('data-key')] = el.type==='checkbox'?(el.checked?'1':''):el.value;
+            });
+            var idx=1;
+            editorEl.querySelectorAll('.rpt-item').forEach(function(itemCard){
+                cfg.itemFields.forEach(function(f){
+                    var el = itemCard.querySelector('[data-key="'+f.key+'"]');
+                    if (el) currentData[cfg.keyFn(f.key,idx)] = el.type==='checkbox'?(el.checked?'1':''):el.value;
+                });
+                idx++;
+            });
+        }
+        dataJsonEl.value = JSON.stringify(currentData);
+    }
+
+    function buildEditor(type, data) {
+        // Destroy previous editors
+        if (_cm) { try { _cm.toTextArea(); } catch(e){} _cm=null; }
+        _quill = null;
+        editorEl.innerHTML = '';
+
+        if (!type) { editorEl.innerHTML = '<p class="text-xs text-slate-400">Chọn loại section ở trên để bắt đầu.</p>'; return; }
+
+        if (isCodeType(type)) {
+            editorEl.innerHTML = '<label class="block text-[11px] font-medium text-slate-500 mb-1">'+codeMode(type).toUpperCase()+' Code</label><textarea class="code-ta">'+esc(data[codeKey(type)]||'')+'</textarea>';
+            if (window.CodeMirror) {
+                _cm = CodeMirror.fromTextArea(editorEl.querySelector('.code-ta'), { mode: codeMode(type), lineNumbers:true, lineWrapping:true, tabSize:2, extraKeys:{Tab:function(cm){cm.replaceSelection('  ');}} });
+                _cm.on('change', readData);
+            }
+        } else if (isRichType(type)) {
+            editorEl.innerHTML = '<label class="block text-[11px] font-medium text-slate-500 mb-1">Nội dung</label><div class="rich-host"></div>';
+            if (window.Quill) {
+                _quill = new Quill(editorEl.querySelector('.rich-host'), { theme:'snow', modules:{ toolbar:[['bold','italic','underline'],[{header:[1,2,3,false]}],[{list:'ordered'},{list:'bullet'}],['link'],['clean']] }});
+                if (data.content) _quill.clipboard.dangerouslyPasteHTML(data.content);
+                _quill.on('text-change', readData);
+            }
+        } else if (isComponentType(type)) {
+            var grid = document.createElement('div'); grid.className='comp-fields grid grid-cols-2 gap-2';
+            COMPONENT_FIELDS[type].forEach(function(f){ appendField(grid, f, data[f.key]||''); });
+            editorEl.appendChild(grid);
+            editorEl.querySelectorAll('.comp-field').forEach(function(el){ el.addEventListener('input', readData); el.addEventListener('change', readData); });
+        } else if (isRepeatableType(type)) {
+            var cfg = REPEATABLE_COMPONENTS[type];
+            var wrap = document.createElement('div'); wrap.className='space-y-3';
+            // Header fields
+            if (cfg.headerFields && cfg.headerFields.length) {
+                var hGrid = document.createElement('div'); hGrid.className='rpt-header grid grid-cols-2 gap-2';
+                cfg.headerFields.forEach(function(f){ appendField(hGrid, f, data[f.key]||'', 'rpt-header-field'); });
+                hGrid.querySelectorAll('[data-key]').forEach(function(el){ el.addEventListener('input', readData); el.addEventListener('change', readData); });
+                wrap.appendChild(hGrid);
+            }
+            var panel = document.createElement('div'); panel.className='border-t border-slate-100 pt-2';
+            var titleBar = document.createElement('div'); titleBar.className='flex items-center justify-between mb-2';
+            titleBar.innerHTML = '<span class="text-[11px] font-semibold text-slate-400 uppercase">'+esc(cfg.itemLabel)+'s</span><button type="button" class="rpt-add-btn text-[11px] font-medium text-blue-600 hover:text-blue-800">'+esc(cfg.addLabel)+'</button>';
+            panel.appendChild(titleBar);
+            var itemsList = document.createElement('div'); itemsList.className='rpt-items space-y-2';
+            extractRptItems(data, cfg).forEach(function(d){ itemsList.appendChild(buildRptItemCard(d, cfg, readData)); });
+            panel.appendChild(itemsList); wrap.appendChild(panel); editorEl.appendChild(wrap);
+            titleBar.querySelector('.rpt-add-btn').addEventListener('click', function(){
+                var empty={}; cfg.itemFields.forEach(function(f){empty[f.key]='';});
+                var newCard = buildRptItemCard(empty, cfg, readData);
+                itemsList.appendChild(newCard);
+                var first=newCard.querySelector('input,textarea,select'); if(first) first.focus();
+                readData();
+            });
+        } else {
+            editorEl.innerHTML = '<p class="text-xs text-slate-400">Loại này chưa được hỗ trợ trong trình soạn thảo thư viện.</p>';
+        }
+    }
+
+    // ── Type picker ─────────────────────────────────────────────────────────────
+    document.querySelectorAll('.type-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            readData(); // save current data before switching
+            var type  = btn.getAttribute('data-type');
+            var color = btn.getAttribute('data-color');
+            // Reset all buttons
+            document.querySelectorAll('.type-btn').forEach(function(b) {
+                var c = b.getAttribute('data-color');
+                b.className = 'type-btn px-2 py-1.5 rounded-lg text-xs font-medium border transition-colors border-slate-200 text-slate-600 hover:border-'+c+'-300 hover:text-'+c+'-700 hover:bg-'+c+'-50';
+            });
+            btn.className = 'type-btn px-2 py-1.5 rounded-lg text-xs font-medium border transition-colors bg-'+color+'-600 text-white border-'+color+'-600';
+            currentType = type;
+            typeInputEl.value = type;
+            previewTypeEl.textContent = type;
+            currentData = {}; // reset data when type changes
+            dataJsonEl.value = '{}';
+            buildEditor(type, {});
+        });
+    });
+
+    // Submit: ensure data is read before form submits
+    document.getElementById('tpl-form').addEventListener('submit', function() { readData(); });
+
+    // Initial render (for edit mode)
+    if (currentType) {
+        buildEditor(currentType, currentData);
+    } else {
+        editorEl.innerHTML = '<p class="text-xs text-slate-400">Chọn loại section ở trên để bắt đầu.</p>';
+    }
+
+}());
+</script>
+}

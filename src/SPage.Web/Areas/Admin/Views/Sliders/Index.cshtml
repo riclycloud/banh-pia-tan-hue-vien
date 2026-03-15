@@ -1,0 +1,72 @@
+@using SPage.Domain.Entities.Content
+@model IEnumerable<Slider>
+@{
+ ViewData["Title"] = "Slider & Banner";
+}
+
+<div class="flex items-center justify-between mb-4">
+ <div>
+ <h2 class="text-xl font-bold text-gray-800 ">Slider & Banner</h2>
+ <p class="mt-1 text-sm text-gray-500 ">
+ Quản lý các slider hình ảnh ở nhiều vị trí trên website.
+ </p>
+ </div>
+ <a asp-action="Create" class="px-4 py-2 text-sm text-white bg-primary-600 rounded-lg hover:bg-primary-700">
+ + Thêm slider
+ </a>
+</div>
+
+<div class="relative overflow-x-auto shadow rounded-lg">
+ <table class="w-full text-sm text-left text-gray-500 ">
+ <thead class="text-xs text-gray-700 uppercase bg-gray-50 ">
+ <tr>
+ <th class="px-4 py-3">Tên slider</th>
+ <th class="px-4 py-3">Vị trí</th>
+ <th class="px-4 py-3 text-center">Số slide</th>
+ <th class="px-4 py-3 text-center">Trạng thái</th>
+ <th class="px-4 py-3 text-right">Thao tác</th>
+ </tr>
+ </thead>
+ <tbody>
+ @foreach (var s in Model)
+ {
+ <tr class="bg-white border-b hover:bg-gray-50 :bg-gray-700">
+ <td class="px-4 py-3 font-medium text-gray-900 ">@s.Name</td>
+ <td class="px-4 py-3">@s.Position</td>
+ <td class="px-4 py-3 text-center">@s.Slides.Count</td>
+ <td class="px-4 py-3 text-center">
+ @if (s.IsActive)
+ {
+ <span class="px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-800">Hiển thị</span>
+ }
+ else
+ {
+ <span class="px-2 py-0.5 text-xs font-medium rounded-full bg-gray-100 text-gray-600">Ẩn</span>
+ }
+ </td>
+ <td class="px-4 py-3 text-right space-x-2">
+ <a asp-action="Edit" asp-route-id="@s.Id"
+ class="text-sm text-primary-600 hover:underline">Sửa</a>
+ <a asp-action="EditSlides" asp-route-id="@s.Id"
+ class="text-sm text-blue-600 hover:underline">Slide</a>
+ <form asp-action="Delete" asp-route-id="@s.Id" method="post" class="inline"
+ onsubmit="return confirm('Xóa slider này và toàn bộ slide?');">
+ @Html.AntiForgeryToken()
+ <button type="submit" class="text-sm text-red-600 hover:underline">Xóa</button>
+ </form>
+ </td>
+ </tr>
+ }
+
+ @if (!Model.Any())
+ {
+ <tr>
+ <td colspan="5" class="px-4 py-8 text-center text-gray-400">
+ Chưa có slider nào. Nhấn <strong>Thêm slider</strong> để bắt đầu.
+ </td>
+ </tr>
+ }
+ </tbody>
+ </table>
+</div>
+

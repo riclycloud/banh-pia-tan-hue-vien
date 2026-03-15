@@ -1,0 +1,115 @@
+@using SPage.Domain.Entities.Seo
+@model List<SlugHistory>
+@{
+ ViewData["Title"] = "SEO & Redirect";
+}
+
+<div class="flex items-center justify-between mb-4">
+ <div>
+ <h2 class="text-xl font-bold text-gray-800 ">Lịch sử Redirect 301</h2>
+ <p class="mt-1 text-sm text-gray-500 ">
+ Danh sách các URL cũ sẽ tự động chuyển hướng 301 đến URL mới khi có request 404.
+ </p>
+ </div>
+</div>
+
+<div class="relative overflow-x-auto shadow rounded-lg">
+ <table class="w-full text-sm text-left text-gray-500 ">
+ <thead class="text-xs text-gray-700 uppercase bg-gray-50 ">
+ <tr>
+ <th class="px-4 py-3">Slug cũ</th>
+ <th class="px-4 py-3">Chuyển đến</th>
+ <th class="px-4 py-3">Loại</th>
+ <th class="px-4 py-3">Thay đổi lúc</th>
+ <th class="px-4 py-3">Người sửa</th>
+ <th class="px-4 py-3 text-right">Thao tác</th>
+ </tr>
+ </thead>
+ <tbody>
+ @foreach (var h in Model)
+ {
+ <tr class="bg-white border-b hover:bg-gray-50 :bg-gray-700">
+ <td class="px-4 py-3 font-mono text-xs text-gray-700 ">
+ @h.OldSlug
+ </td>
+ <td class="px-4 py-3">
+ <a href="@h.RedirectPath" target="_blank"
+ class="font-mono text-xs text-primary-600 hover:underline ">
+ @h.RedirectPath
+ </a>
+ </td>
+ <td class="px-4 py-3">
+ <span class="px-2 py-0.5 text-xs font-medium rounded-full bg-blue-100 text-blue-800 ">
+ @h.EntityType
+ </span>
+ </td>
+ <td class="px-4 py-3 whitespace-nowrap">
+ @h.ChangedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+ </td>
+ <td class="px-4 py-3">@(h.ChangedBy ?? "—")</td>
+ <td class="px-4 py-3 text-right">
+ <form asp-action="DeleteHistory" asp-route-id="@h.Id" method="post" class="inline"
+ onsubmit="return confirm('Xóa redirect này? URL cũ sẽ trả về 404.')">
+ @Html.AntiForgeryToken()
+ <button type="submit" class="text-red-600 hover:underline ">Xóa</button>
+ </form>
+ </td>
+ </tr>
+ }
+
+ @if (!Model.Any())
+ {
+ <tr>
+ <td colspan="6" class="px-4 py-8 text-center text-gray-400">
+ Chưa có lịch sử redirect nào. Khi admin thay đổi slug bài viết/sản phẩm,
+ hệ thống sẽ tự động tạo redirect 301.
+ </td>
+ </tr>
+ }
+ </tbody>
+ </table>
+</div>
+
+@* Pagination *@
+@{
+ var seoPage = (int)ViewBag.Page;
+ var seoTotalPages = (int)ViewBag.TotalPages;
+}
+@if (seoTotalPages > 1)
+{
+ <nav class="flex items-center justify-center gap-1.5 mt-4" aria-label="Phân trang">
+ @if (seoPage > 1)
+ {
+ <a asp-area="Admin" asp-controller="Seo" asp-action="Index" asp-route-page="@(seoPage - 1)" class="px-3 py-1.5 text-sm text-gray-600 bg-white border border-gray-300 rounded-xl hover:bg-gray-100 transition-colors" rel="prev">‹ Trước</a>
+ }
+ @for (var i = Math.Max(1, seoPage - 2); i <= Math.Min(seoTotalPages, seoPage + 2); i++)
+ {
+ <a asp-area="Admin" asp-controller="Seo" asp-action="Index" asp-route-page="@i"
+ class="px-3 py-1.5 text-sm rounded-xl border transition-colors @(i == seoPage ? "bg-blue-600 text-white border-blue-600 font-medium" : "text-gray-600 bg-white border-gray-300 hover:bg-gray-100")">
+ @i
+ </a>
+ }
+ @if (seoPage < seoTotalPages)
+ {
+ <a asp-area="Admin" asp-controller="Seo" asp-action="Index" asp-route-page="@(seoPage + 1)" class="px-3 py-1.5 text-sm text-gray-600 bg-white border border-gray-300 rounded-xl hover:bg-gray-100 transition-colors" rel="next">Sau ›</a>
+ }
+ </nav>
+}
+
+@* Info box *@
+<div class="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-xl /20 ">
+ <div class="flex gap-2">
+ <svg class="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+ <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z"/>
+ </svg>
+ <div class="text-sm text-blue-800 ">
+ <p class="font-medium mb-1">Cách hoạt động:</p>
+ <ul class="list-disc list-inside space-y-1 text-blue-700 ">
+ <li>Khi admin đổi slug của bài viết/sản phẩm/trang, hệ thống tự lưu redirect</li>
+ <li>Khi có request 404, <code class="bg-blue-100 px-1 rounded">SmartSeoRedirectMiddleware</code> kiểm tra bảng này</li>
+ <li>Nếu tìm thấy, tự động 301 redirect đến URL mới (giữ PageRank)</li>
+ <li>Kết quả được cache 6 giờ trong IMemoryCache</li>
+ </ul>
+ </div>
+ </div>
+</div>

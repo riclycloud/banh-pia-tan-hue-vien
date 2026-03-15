@@ -1,0 +1,159 @@
+@using SPage.Application.Features.VideoLibrary.DTOs
+@using SPage.Domain.Enums
+@model VideoDetailDto
+@{
+    ViewData["Title"] = Model.MetaTitle ?? Model.Title;
+    var tags = (Model.TagsCsv ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+    string PlatformLabel(VideoPlatform p) => p switch {
+        VideoPlatform.YouTube  => "YouTube",
+        VideoPlatform.Facebook => "Facebook",
+        VideoPlatform.TikTok   => "TikTok",
+        _                      => p.ToString()
+    };
+    string PlatformBadgeClass(VideoPlatform p) => p switch {
+        VideoPlatform.YouTube  => "video-detail__badge--yt",
+        VideoPlatform.Facebook => "video-detail__badge--fb",
+        VideoPlatform.TikTok   => "video-detail__badge--tt",
+        _                      => ""
+    };
+    var related = ViewBag.RelatedVideos as List<VideoSummaryDto>;
+    var categoryLink = !string.IsNullOrEmpty(Model.CategorySlug) ? $"/video/{Model.CategorySlug}" : "/video";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages.css" asp-append-version="true" />
+}
+
+<main id="main-content" class="public-page video-detail-page" itemscope itemtype="https://schema.org/VideoObject">
+    <meta itemprop="name" content="@Model.Title"/>
+    <meta itemprop="description" content="@(Model.Description ?? Model.Title)"/>
+    <meta itemprop="thumbnailUrl" content="@Model.ThumbnailUrl"/>
+    <meta itemprop="embedUrl" content="@Model.EmbedUrl"/>
+    <meta itemprop="contentUrl" content="@Model.VideoUrl"/>
+    @if (Model.PublishedAt.HasValue) { <meta itemprop="uploadDate" content="@Model.PublishedAt.Value.ToString("O")"/> }
+    @if (!string.IsNullOrEmpty(Model.Duration)) { <meta itemprop="duration" content="@Model.Duration"/> }
+
+    <div class="hd-container">
+        @* Breadcrumb *@
+        <nav aria-label="Breadcrumb" class="public-page__breadcrumb mb-4" itemscope itemtype="https://schema.org/BreadcrumbList">
+            <a href="/">Trang chủ</a><span class="public-page__breadcrumb-sep">/</span>
+            <a href="/video">Thư viện Video</a><span class="public-page__breadcrumb-sep">/</span>
+            @if (!string.IsNullOrEmpty(Model.CategoryName))
+            {
+                <a href="@categoryLink">@Model.CategoryName</a><span class="public-page__breadcrumb-sep">/</span>
+            }
+            <span class="public-page__breadcrumb-current">@Model.Title</span>
+        </nav>
+
+        <div class="video-detail__layout">
+            @* Cột chính: player + thông tin *@
+            <div class="video-detail__main">
+                @* Embed YouTube / Facebook / TikTok *@
+                <div class="video-detail__embed-wrap">
+                    @if (Model.Platform == VideoPlatform.TikTok)
+                    {
+                        <blockquote class="tiktok-embed" cite="@Model.VideoUrl" data-video-id="@Model.VideoId"
+                                    style="max-width:100%;min-width:100%;height:100%;position:absolute;inset:0;border-radius:inherit">
+                            <section></section>
+                        </blockquote>
+                        <script async src="https://www.tiktok.com/embed.js"></script>
+                    }
+                    else
+                    {
+                        <iframe src="@Model.EmbedUrl"
+                                class="video-detail__iframe"
+                                title="@Model.Title"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                allowfullscreen
+                                loading="lazy"></iframe>
+                    }
+                </div>
+
+                <div class="video-detail__info">
+                    <div class="video-detail__badges">
+                        <span class="video-detail__badge @PlatformBadgeClass(Model.Platform)">@PlatformLabel(Model.Platform)</span>
+                        @if (!string.IsNullOrEmpty(Model.CategoryName))
+                        {
+                            <a href="@categoryLink" class="video-detail__cat-link">@Model.CategoryName</a>
+                        }
+                        @if (Model.IsFeatured)
+                        {
+                            <span class="video-detail__featured">★ Nổi bật</span>
+                        }
+                    </div>
+                    <h1 class="video-detail__title">@Model.Title</h1>
+                    <div class="video-detail__meta">
+                        @if (Model.PublishedAt.HasValue)
+                        {
+                            <time datetime="@Model.PublishedAt.Value.ToString("O")">@Model.PublishedAt.Value.ToString("dd/MM/yyyy")</time>
+                            <span> · </span>
+                        }
+                        <span>@Model.ViewCount.ToString("N0") lượt xem</span>
+                    </div>
+                </div>
+
+                @if (!string.IsNullOrEmpty(Model.Description))
+                {
+                    <div class="video-detail__desc">@Html.Raw(System.Net.WebUtility.HtmlEncode(Model.Description).Replace("\n", "<br />"))</div>
+                }
+
+                @if (tags.Any())
+                {
+                    <div class="video-detail__tags">
+                        @foreach (var tag in tags)
+                        {
+                            <a href="/video?q=@Uri.EscapeDataString(tag)" class="video-detail__tag" rel="tag">#@tag</a>
+                        }
+                    </div>
+                }
+
+                <div class="video-detail__share">
+                    <span class="video-detail__share-label">Chia sẻ:</span>
+                    <a href="https://www.facebook.com/sharer/sharer.php?u=@Uri.EscapeDataString(Url.Action("Detail","Video",new{slug=Model.Slug},Context.Request.Scheme)!)"
+                       target="_blank" rel="noopener" class="ac-btn ac-btn--red">
+                        Facebook
+                    </a>
+                    <button type="button" id="btn-copy-link" class="video-detail__copy-btn">
+                        Sao chép link
+                    </button>
+                </div>
+            </div>
+
+            @* Video liên quan (sidebar hoặc dưới) *@
+            @if (related is { Count: > 0 })
+            {
+                <aside class="video-detail__related" aria-label="Video liên quan">
+                    <h2 class="video-detail__related-title">Video liên quan</h2>
+                    <div class="video-detail__related-list">
+                        @foreach (var v in related)
+                        {
+                            <a href="/video/@v.Slug" class="video-detail__related-card">
+                                <div class="video-detail__related-thumb">
+                                    <img src="@v.ThumbnailUrl" alt="@v.Title" loading="lazy" />
+                                    <span class="video-detail__related-play">
+                                        <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7L8 5z"/></svg>
+                                    </span>
+                                </div>
+                                <div class="video-detail__related-body">
+                                    <h3 class="video-detail__related-title-item">@v.Title</h3>
+                                    <span class="video-detail__related-meta">@v.ViewCount.ToString("N0") lượt xem</span>
+                                </div>
+                            </a>
+                        }
+                    </div>
+                </aside>
+            }
+        </div>
+    </div>
+</main>
+
+<script>
+document.getElementById('btn-copy-link')?.addEventListener('click', function() {
+    var btn = this;
+    navigator.clipboard.writeText(window.location.href).then(function() {
+        var t = btn.textContent;
+        btn.textContent = '✓ Đã sao chép!';
+        setTimeout(function() { btn.textContent = t; }, 2000);
+    });
+});
+</script>

@@ -1,0 +1,85 @@
+@using SPage.Domain.Entities.Navigation
+@model MenuItem
+@{
+    ViewData["Title"] = Model.Id == 0 ? "Thêm menu" : "Sửa menu";
+    var parents = ViewBag.Parents as IEnumerable<MenuItem> ?? [];
+}
+
+<h1 class="text-xl font-bold text-slate-800 mb-5">
+    @ViewData["Title"]
+</h1>
+
+<form asp-action="Edit" asp-route-id="@Model.Id" method="post" class="space-y-4 max-w-xl">
+    @Html.AntiForgeryToken()
+
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-4">
+        <div>
+            <label asp-for="Title" class="block mb-1.5 text-[13px] font-medium text-slate-600">Tiêu đề</label>
+            <input asp-for="Title"
+                   class="block w-full px-3 py-2.5 text-sm bg-white border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" />
+            <span asp-validation-for="Title" class="text-xs text-red-500 mt-1 block"></span>
+        </div>
+
+        <div>
+            <label asp-for="Url" class="block mb-1.5 text-[13px] font-medium text-slate-600">URL</label>
+            <input asp-for="Url"
+                   class="block w-full px-3 py-2.5 text-sm bg-white border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" />
+            <span class="text-xs text-slate-400">Ví dụ: /blog, /san-pham, /hoa-lan-5-canh</span>
+            <span asp-validation-for="Url" class="text-xs text-red-500 mt-1 block"></span>
+        </div>
+
+        <div>
+            <label asp-for="LocationId" class="block mb-1.5 text-[13px] font-medium text-slate-600">Vị trí</label>
+            <select asp-for="LocationId" asp-items="ViewBag.Locations"
+                    class="block w-full px-3 py-2.5 text-sm bg-white border border-slate-200 rounded-xl text-slate-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                <option value="">-- Chọn vị trí --</option>
+            </select>
+            <span asp-validation-for="LocationId" class="text-xs text-red-500 mt-1 block"></span>
+        </div>
+
+        <div>
+            <label asp-for="ParentId" class="block mb-1.5 text-[13px] font-medium text-slate-600">Menu cha</label>
+            <select asp-for="ParentId"
+                    class="block w-full px-3 py-2.5 text-sm bg-white border border-slate-200 rounded-xl text-slate-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                <option value="">(Không có)</option>
+                @foreach (var p in parents)
+                {
+                    <option value="@p.Id" selected="@(Model.ParentId == p.Id)">
+                        @p.Title (@(p.Location?.Name ?? "?"))
+                    </option>
+                }
+            </select>
+            <span class="text-xs text-slate-400">Chọn menu cha để tạo menu đa cấp.</span>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+            <div>
+                <label asp-for="SortOrder" class="block mb-1.5 text-[13px] font-medium text-slate-600">Thứ tự</label>
+                <input asp-for="SortOrder" type="number"
+                       class="block w-full px-3 py-2.5 text-sm bg-white border border-slate-200 rounded-xl text-slate-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" />
+            </div>
+            <div class="space-y-3 pt-6">
+                <div class="flex items-center gap-2">
+                    <input asp-for="IsActive" type="checkbox" class="w-4 h-4 accent-blue-600 border-slate-300 rounded" />
+                    <label asp-for="IsActive" class="text-[13px] text-slate-600 cursor-pointer">Hiển thị</label>
+                </div>
+                <div class="flex items-center gap-2">
+                    <input asp-for="OpenInNewTab" type="checkbox" class="w-4 h-4 accent-blue-600 border-slate-300 rounded" />
+                    <label asp-for="OpenInNewTab" class="text-[13px] text-slate-600 cursor-pointer">Mở tab mới</label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="flex items-center gap-2">
+        <button type="submit"
+                class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-colors shadow-sm">
+            Lưu
+        </button>
+        <a asp-action="Index" class="px-4 py-2 text-sm font-medium text-slate-600 bg-slate-100 rounded-xl hover:bg-slate-200 transition-colors">Hủy</a>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

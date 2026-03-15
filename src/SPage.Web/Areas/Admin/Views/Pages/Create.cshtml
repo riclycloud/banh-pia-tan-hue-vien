@@ -1,0 +1,177 @@
+@model SPage.Areas.Admin.Controllers.PageFormModel
+@using SPage.Domain.Enums
+@{
+    ViewData["Title"] = "Thêm trang";
+}
+
+@* ── Breadcrumb + nút về danh sách (trong Admin) ── *@
+<div class="flex flex-wrap items-center justify-between gap-3 mb-5">
+    <div class="flex items-center gap-2 text-sm">
+        <a asp-area="Admin" asp-controller="Pages" asp-action="Index" class="text-slate-400 hover:text-blue-600 transition-colors">Trang động</a>
+        <svg class="w-3.5 h-3.5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m9 18 6-6-6-6"/>
+        </svg>
+        <span class="text-slate-600 font-medium">Thêm mới</span>
+    </div>
+    <a asp-area="Admin" asp-controller="Pages" asp-action="Index" class="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-slate-600 bg-slate-100 rounded-xl hover:bg-slate-200 transition-colors">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+        Về danh sách trang
+    </a>
+</div>
+
+<form asp-action="Create" method="post">
+    @Html.AntiForgeryToken()
+    <div class="grid grid-cols-1 gap-5 lg:grid-cols-3">
+
+        @* ── Main ── *@
+        <div class="lg:col-span-2 space-y-4">
+
+            @* Title + Slug *@
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-4">
+                <div>
+                    <label asp-for="Title" class="block mb-1.5 text-[13px] font-medium text-slate-600">
+                        Tiêu đề <span class="text-red-500">*</span>
+                    </label>
+                    <input asp-for="Title" id="page-title" placeholder="Nhập tiêu đề trang..."
+                           class="block w-full px-3 py-2.5 text-sm bg-white border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" />
+                    <span asp-validation-for="Title" class="text-xs text-red-500 mt-1 block"></span>
+                </div>
+                <div>
+                    <label asp-for="Slug" class="block mb-1.5 text-[13px] font-medium text-slate-600">
+                        Slug (URL) <span class="text-slate-400 font-normal">— để trống sẽ tự sinh từ tiêu đề</span>
+                    </label>
+                    <div class="flex rounded-xl overflow-hidden border border-slate-200 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 transition-colors">
+                        <span class="px-3 py-2.5 text-xs text-slate-500 bg-slate-50 border-r border-slate-200 shrink-0 flex items-center">/</span>
+                        <input asp-for="Slug" id="page-slug" placeholder="tu-dong-sinh-tu-tieu-de" autocomplete="off"
+                               class="flex-1 px-3 py-2.5 text-sm bg-white text-slate-900 focus:outline-none font-mono" />
+                    </div>
+                    <span asp-validation-for="Slug" class="text-xs text-red-500 mt-1 block"></span>
+                    <p class="mt-1 text-xs text-slate-400">Chỉ dùng a-z, 0-9 và dấu gạch ngang.</p>
+                </div>
+            </div>
+
+            @* SEO *@
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+                <h3 class="text-sm font-semibold text-slate-700 mb-4">SEO</h3>
+                <div class="space-y-4">
+                    <div>
+                        <label asp-for="MetaTitle" class="block mb-1.5 text-[13px] font-medium text-slate-600">
+                            Meta Title <span class="text-slate-400 font-normal">(tối đa 70 ký tự)</span>
+                        </label>
+                        <input asp-for="MetaTitle" id="meta-title" maxlength="70"
+                               class="block w-full px-3 py-2.5 text-sm bg-white border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" />
+                        <div class="flex justify-between mt-1">
+                            <span asp-validation-for="MetaTitle" class="text-xs text-red-500"></span>
+                            <span id="meta-title-count" class="text-xs text-slate-400">0/70</span>
+                        </div>
+                    </div>
+                    <div>
+                        <label asp-for="MetaDescription" class="block mb-1.5 text-[13px] font-medium text-slate-600">
+                            Meta Description <span class="text-slate-400 font-normal">(tối đa 160 ký tự)</span>
+                        </label>
+                        <textarea asp-for="MetaDescription" id="meta-desc" rows="2" maxlength="160"
+                                  class="block w-full px-3 py-2.5 text-sm bg-white border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"></textarea>
+                        <div class="flex justify-between mt-1">
+                            <span asp-validation-for="MetaDescription" class="text-xs text-red-500"></span>
+                            <span id="meta-desc-count" class="text-xs text-slate-400">0/160</span>
+                        </div>
+                    </div>
+                    <div>
+                        <label asp-for="CanonicalUrl" class="block mb-1.5 text-[13px] font-medium text-slate-600">Canonical URL</label>
+                        <input asp-for="CanonicalUrl" placeholder="https://..." autocomplete="off"
+                               class="block w-full px-3 py-2.5 text-sm bg-white border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" />
+                    </div>
+                    <div class="flex items-center gap-2.5 pt-1">
+                        <input asp-for="IsIndexable" type="checkbox" id="is-indexable"
+                               class="w-4 h-4 text-blue-600 bg-white border-slate-300 rounded accent-blue-600" />
+                        <label asp-for="IsIndexable" class="text-[13px] text-slate-600 cursor-pointer">
+                            Cho phép Google index trang này
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @* ── Sidebar ── *@
+        <div class="space-y-4">
+
+            @* Publish *@
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+                <h3 class="text-sm font-semibold text-slate-700 mb-4">Xuất bản</h3>
+                <div class="space-y-3 mb-4">
+                    <div>
+                        <label asp-for="Status" class="block mb-1.5 text-[13px] font-medium text-slate-600">Trạng thái</label>
+                        <select asp-for="Status" asp-items="Html.GetEnumSelectList<PageStatus>()"
+                                class="block w-full px-3 py-2.5 text-sm bg-white border border-slate-200 rounded-xl text-slate-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                        </select>
+                    </div>
+                    <div>
+                        <label asp-for="Template" class="block mb-1.5 text-[13px] font-medium text-slate-600">Template</label>
+                        <select asp-for="Template"
+                                class="block w-full px-3 py-2.5 text-sm bg-white border border-slate-200 rounded-xl text-slate-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                            <option value="Default">Default</option>
+                            <option value="LandingPage">LandingPage</option>
+                            <option value="Contact">Contact</option>
+                            <option value="About">About</option>
+                            <option value="FullWidth">FullWidth</option>
+                        </select>
+                        <p class="mt-1 text-xs text-slate-400">Razor view dùng để render trang này.</p>
+                    </div>
+                </div>
+                <div class="flex gap-2 pt-3 border-t border-slate-100">
+                    <button type="submit"
+                            class="flex-1 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-colors shadow-sm">
+                        Tạo trang
+                    </button>
+                    <a asp-area="Admin" asp-controller="Pages" asp-action="Index"
+                       class="px-4 py-2 text-sm font-medium text-slate-600 bg-slate-100 rounded-xl hover:bg-slate-200 transition-colors">
+                        Hủy
+                    </a>
+                </div>
+            </div>
+
+            @* Help *@
+            <div class="bg-blue-50 border border-blue-100 rounded-2xl p-4">
+                <h4 class="text-xs font-semibold text-blue-700 mb-2 uppercase tracking-wide">Về Page Builder</h4>
+                <p class="text-xs text-blue-600 leading-relaxed">
+                    Sau khi tạo trang, bạn có thể thêm và sắp xếp các <strong>Sections</strong>
+                    (Hero, TextBlock, Gallery…) từ trang chỉnh sửa.
+                </p>
+            </div>
+        </div>
+    </div>
+</form>
+
+@section Scripts {
+<script>
+(function(){
+    // Auto slug from title
+    var title = document.getElementById('page-title');
+    var slugInput = document.getElementById('page-slug');
+    if(title && slugInput){
+        title.addEventListener('input', function(){
+            if(slugInput.dataset.manual) return;
+            slugInput.value = title.value
+                .toLowerCase()
+                .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+                .replace(/đ/g,'d').replace(/Đ/g,'d')
+                .replace(/[^a-z0-9\s-]/g,'')
+                .trim().replace(/\s+/g,'-');
+        });
+        slugInput.addEventListener('input', function(){
+            slugInput.dataset.manual = '1';
+        });
+    }
+    // Character counters
+    function counter(inputId, counterId, max){
+        var el = document.getElementById(inputId);
+        var cnt = document.getElementById(counterId);
+        if(!el||!cnt) return;
+        function upd(){ var l=el.value.length; cnt.textContent=l+'/'+max; cnt.className='text-xs '+(l>max*0.9?'text-orange-500':'text-slate-400'); }
+        el.addEventListener('input',upd); upd();
+    }
+    counter('meta-title','meta-title-count',70);
+    counter('meta-desc','meta-desc-count',160);
+})();
+</script>
+}

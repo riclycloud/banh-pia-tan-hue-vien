@@ -1,0 +1,75 @@
+@using SPage.Domain.Entities.Ai
+@model List<AiProviderConfig>
+@{
+    ViewData["Title"] = "API Key AI";
+}
+
+<div class="flex items-center justify-between mb-5">
+    <div>
+        <h1 class="text-xl font-bold text-slate-800">API Key AI</h1>
+        <p class="text-sm text-slate-500 mt-0.5">Quản lý API key cho Gemini, ChatGPT, Grok... dùng trong công cụ viết bài chuẩn SEO.</p>
+    </div>
+    <a asp-action="Create" class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-colors shadow-sm">
+        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M10 5a1 1 0 0 1 1 1v3h3a1 1 0 1 1 0 2h-3v3a1 1 0 1 1-2 0v-3H6a1 1 0 1 1 0-2h3V6a1 1 0 0 1 1-1Z"/></svg>
+        Thêm provider
+    </a>
+</div>
+
+@if (TempData["Success"] is string success)
+{
+    <div class="mb-4 px-4 py-3 rounded-xl bg-emerald-50 text-emerald-800 text-sm">@success</div>
+}
+
+<div class="rounded-2xl overflow-hidden border border-slate-200 shadow-sm bg-white">
+    <table class="w-full text-sm text-left">
+        <thead>
+            <tr>
+                <th class="bg-slate-50 px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-slate-500 border-b border-slate-200">Provider</th>
+                <th class="bg-slate-50 px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-slate-500 border-b border-slate-200">Model</th>
+                <th class="bg-slate-50 px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-slate-500 border-b border-slate-200">API Key</th>
+                <th class="bg-slate-50 px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-slate-500 border-b border-slate-200 text-center">Trạng thái</th>
+                <th class="bg-slate-50 px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-slate-500 border-b border-slate-200 text-right">Thao tác</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var c in Model)
+            {
+                <tr class="border-b border-slate-100 hover:bg-slate-50/60 transition-colors">
+                    <td class="px-4 py-3">
+                        <span class="font-medium text-slate-800">@(c.DisplayName ?? c.ProviderKey)</span>
+                        <span class="text-slate-400 text-xs ml-1">@c.ProviderKey</span>
+                    </td>
+                    <td class="px-4 py-3 text-slate-600">@(c.ModelName ?? "—")</td>
+                    <td class="px-4 py-3 text-slate-500 font-mono text-xs">
+                        @(string.IsNullOrEmpty(c.ApiKey) ? "—" : (c.ApiKey.Length > 8 ? c.ApiKey[..4] + "…" + c.ApiKey[^4..] : "***"))
+                    </td>
+                    <td class="px-4 py-3 text-center">
+                        @if (c.IsActive)
+                        {
+                            <span class="bg-emerald-100 text-emerald-700 text-xs font-medium px-2.5 py-0.5 rounded-full">Bật</span>
+                        }
+                        else
+                        {
+                            <span class="bg-slate-100 text-slate-600 text-xs font-medium px-2.5 py-0.5 rounded-full">Tắt</span>
+                        }
+                    </td>
+                    <td class="px-4 py-3 text-right">
+                        <a asp-action="Edit" asp-route-id="@c.Id" class="inline-flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 px-2.5 py-1.5 rounded-lg transition-colors">Sửa</a>
+                        <form asp-action="Delete" asp-route-id="@c.Id" method="post" class="inline" onsubmit="return confirm('Xóa cấu hình này?');">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="inline-flex items-center gap-1 text-xs font-medium text-red-500 hover:text-red-600 hover:bg-red-50 px-2.5 py-1.5 rounded-lg transition-colors">Xóa</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+            @if (!Model.Any())
+            {
+                <tr>
+                    <td colspan="5" class="px-4 py-12 text-center text-slate-400">
+                        Chưa cấu hình provider nào. <a asp-action="Create" class="text-blue-600 hover:underline">Thêm API Key AI</a> để dùng công cụ viết bài SEO.
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

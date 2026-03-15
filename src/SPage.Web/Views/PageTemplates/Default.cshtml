@@ -1,0 +1,449 @@
+@using SPage.Application.Features.Pages.DTOs
+@using SPage.Domain.Entities.Page
+@model DynamicPageDto
+@{
+    ViewData["Title"] = !string.IsNullOrWhiteSpace(Model.MetaTitle) ? Model.MetaTitle : Model.Title;
+    var visibleSections = Model.Sections.Where(s => s.IsVisible).OrderBy(s => s.SortOrder).ToList();
+}
+@* Title và thẻ SEO (meta description, canonical, og, json-ld) được render trong _Layout qua <seo-head />, dữ liệu từ ViewData["Seo"] do controller (Pages/Slug) gán. *@
+
+@* ── Dynamic Page: renders sections từ JSON column ────────────── *@
+<article class="page-article" itemscope itemtype="https://schema.org/WebPage">
+    <meta itemprop="name" content="@Model.Title" />
+
+    @* Hiện title trang nếu không có section Hero tự xử lý heading *@
+   @*  @if (!visibleSections.Any(s => s.SectionType == "Hero") && !string.IsNullOrWhiteSpace(Model.Title))
+    {
+        <div class="container page-title-wrap">
+            <h1 class="page-title" itemprop="headline">@Model.Title</h1>
+        </div>
+    } *@
+
+    @foreach (var sec in visibleSections)
+    {
+        // Luôn có dictionary dữ liệu an toàn, tránh null
+        var secData = sec.Data ?? new Dictionary<string, string?>();
+
+        var secAnchorId = "";
+        try
+        {
+            secData.TryGetValue("id", out secAnchorId);
+        }
+        catch
+        {
+            secAnchorId = null;
+        }
+        // ── Style data ─────────────────────────────────────────────────────
+        secData.TryGetValue("_align", out var secAlign);
+        secData.TryGetValue("_padding", out var secPadding);
+        secData.TryGetValue("_bg_color", out var secBgColor);
+        secData.TryGetValue("_bg_image", out var secBgImage);
+
+        // Build extra CSS classes from style settings
+        var styleClasses = string.Join(" ", new[] { secAlign, secPadding }
+        .Where(s => !string.IsNullOrWhiteSpace(s)));
+
+        // Build inline style string
+        var inlineStyles = "";
+        if (!string.IsNullOrWhiteSpace(secBgColor))
+            inlineStyles += $"background-color:{secBgColor};";
+        if (!string.IsNullOrWhiteSpace(secBgImage))
+            inlineStyles += $"background-image:url('{secBgImage}');background-size:cover;background-position:center;background-repeat:no-repeat;";
+
+        @* Helper: section từ thư viện có thể lưu code trong "content" hoặc key theo loại (css/js/html) *@
+
+        string? GetCodeContent(string type)
+        {
+            if (secData.TryGetValue("content", out var c) && !string.IsNullOrWhiteSpace(c)) return c;
+            var key = type switch { "CssBlock" => "css", "JsBlock" => "js", _ => "html" };
+            return secData.TryGetValue(key, out var k) ? k : null;
+        }
+
+        @* CssBlock → <style> thẳng, không cần wrapper div *@
+        @if (sec.SectionType == "CssBlock")
+        {
+            var cssContent = GetCodeContent("CssBlock");
+            if (!string.IsNullOrWhiteSpace(cssContent))
+            {
+                <style>@Html.Raw(cssContent)</style>
+            }
+            continue;
+        }
+
+        @* JsBlock → <script> thẳng, không cần wrapper div *@
+        @if (sec.SectionType == "JsBlock")
+        {
+            var jsContent = GetCodeContent("JsBlock");
+            if (!string.IsNullOrWhiteSpace(jsContent))
+            {
+                <script>@Html.Raw(jsContent)</script>
+            }
+            continue;
+        }
+
+        @* RawHtml → inject thẳng, chỉ dùng wrapper nếu có id/cssClass/style *@
+        @if (sec.SectionType == "RawHtml")
+        {
+            var rawHtml = GetCodeContent("RawHtml");
+            if (!string.IsNullOrWhiteSpace(rawHtml))
+            {
+                var hasWrapper = secAnchorId is not null || !string.IsNullOrWhiteSpace(sec.CssClass) || !string.IsNullOrWhiteSpace(styleClasses) || !string.IsNullOrWhiteSpace(inlineStyles);
+                if (hasWrapper)
+                {
+                    <div @(secAnchorId is not null ? Html.Raw($"id=\"{secAnchorId}\"") : Html.Raw(""))
+                         class="@sec.CssClass @styleClasses"
+                         @(inlineStyles.Length > 0 ? Html.Raw($"style=\"{inlineStyles}\"") : Html.Raw(""))>
+                        @Html.Raw(rawHtml)
+                    </div>
+                }
+                else
+                {
+                    @Html.Raw(rawHtml)
+                }
+            }
+            continue;
+        }
+
+        @* Tất cả section types khác → wrapper div chuẩn *@
+        <div @(secAnchorId is not null ? Html.Raw($"id=\"{secAnchorId}\"") : Html.Raw(""))
+             class="@sec.CssClass @styleClasses page-section page-section--@sec.SectionType.ToLower()"
+             @(inlineStyles.Length > 0 ? Html.Raw($"style=\"{inlineStyles}\"") : Html.Raw(""))>
+            @switch (sec.SectionType)
+            {
+                case "Hero":
+                    <div class="page-hero">
+                        <div class="page-hero__inner">
+                            @if (secData.TryGetValue("heading", out var heading))
+                            {
+                                <h1 class="page-hero__heading">@heading</h1>
+                            }
+                            @if (secData.TryGetValue("subheading", out var subheading))
+                            {
+                                <p class="page-hero__subheading">@subheading</p>
+                            }
+                            @if (secData.TryGetValue("buttonText", out var btnText) &&
+                                        secData.TryGetValue("buttonUrl", out var btnUrl))
+                            {
+                                <a href="@btnUrl" class="page-hero__cta">@btnText</a>
+                            }
+                        </div>
+                    </div>
+                    break;
+
+                case "TextBlock":
+                    <div class="container">
+                        <div class="page-textblock" itemprop="text">
+                            @if (secData.TryGetValue("title", out var tbTitle))
+                            {
+                                <h2 class="page-textblock__title">@tbTitle</h2>
+                            }
+                            @if (secData.TryGetValue("content", out var tbContent))
+                            {
+                                <div class="page-textblock__body page-prose">@Html.Raw(tbContent)</div>
+                            }
+                        </div>
+                    </div>
+                    break;
+
+                case "Gallery":
+                    <div class="container">
+                        @if (secData.TryGetValue("title", out var galTitle))
+                        {
+                            <h2 class="page-gallery__title">@galTitle</h2>
+                        }
+                        <div class="page-gallery__grid">
+                            @for (var i = 1; secData.TryGetValue($"image{i}", out var imgUrl); i++)
+                            {
+                                secData.TryGetValue($"alt{i}", out var imgAlt);
+                                <div class="page-gallery__item">
+                                    <img src="@imgUrl" alt="@(imgAlt ?? "")" loading="lazy" decoding="async" />
+                                </div>
+                            }
+                        </div>
+                    </div>
+                    break;
+
+                case "ContactForm":
+                    {
+                        secData.TryGetValue("title", out var cfTitle);
+                        secData.TryGetValue("subject", out var cfSubject);
+                        secData.TryGetValue("submitUrl", out var cfSubmitUrl);
+                        secData.TryGetValue("submitBtnText", out var cfBtnText);
+                        var cfSubjectValue = !string.IsNullOrWhiteSpace(cfSubject as string) ? cfSubject : cfTitle;
+
+                        // Check if builder-defined fields exist (field1_label key)
+                        var hasBuilderFields = secData.ContainsKey("field1_label");
+                        var cfFormId = "cf-" + sec.SortOrder;
+
+                        <div class="container">
+                        <div class="card border-0 page-form-card">
+                            <div class="card-body">
+                                @if (!string.IsNullOrEmpty(cfTitle))
+                                {
+                                    <h2 class="card-title">@cfTitle</h2>
+                                }
+
+                                @if (hasBuilderFields)
+                                {
+                                    @* Render form directly from builder data — no API call needed *@
+                                    var cfAction = string.IsNullOrWhiteSpace(cfSubmitUrl) ? "/api/contact" : cfSubmitUrl;
+                                    var cfSubmit = string.IsNullOrWhiteSpace(cfBtnText) ? "Gửi" : cfBtnText;
+
+                                    <form id="@cfFormId" method="post" action="@cfAction" novalidate>
+                                        @if (!string.IsNullOrWhiteSpace(cfSubjectValue?.ToString()))
+                                        {
+                                            <input type="hidden" name="subject" value="@cfSubjectValue" />
+                                        }
+                                        <div class="row g-3">
+                                            @for (var fi = 1; secData.TryGetValue($"field{fi}_name", out var fName); fi++)
+                                            {
+                                                secData.TryGetValue($"field{fi}_label", out var fLabel);
+                                                secData.TryGetValue($"field{fi}_type", out var fType);
+                                                secData.TryGetValue($"field{fi}_placeholder", out var fPlaceholder);
+                                                secData.TryGetValue($"field{fi}_required", out var fRequired);
+                                                secData.TryGetValue($"field{fi}_options", out var fOptions);
+
+                                                var isRequired = fRequired == "1";
+                                                fType ??= "text";
+
+                                                <div class="col-12 col-md-6">
+                                                    <label class="form-label fw-semibold">
+                                                        @fLabel
+                                                        @if (isRequired)
+                                                        {
+                                                            <span class="text-danger">*</span>
+                                                        }
+                                                    </label>
+                                                    @if (fType == "textarea")
+                                                    {
+                                                        <textarea name="@fName" rows="4" class="form-control"
+                                      placeholder="@fPlaceholder"
+                                      @(isRequired? Html.Raw("required") : Html.Raw(""))></textarea>
+                                                    }
+                                                    else if (fType == "select")
+                                                    {
+                                                        <select name="@fName" class="form-select"
+                                                                @(isRequired? Html.Raw("required") : Html.Raw(""))>
+                                                            <option value="">-- Chọn --</option>
+                                                            @foreach (var opt in (fOptions ?? "").Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+                                                            {
+                                                                <option value="@opt">@opt</option>
+                                                            }
+                                                        </select>
+                                                    }
+                                                    else
+                                                    {
+                                                        var inputType = fType switch
+                                                        {
+                                                            "email" => "email",
+                                                            "tel" => "tel",
+                                                            _ => "text"
+                                                        };
+                                                        <input type="@inputType" name="@fName" class="form-control"
+                                                               placeholder="@fPlaceholder"
+                                                               @(isRequired? Html.Raw("required") : Html.Raw("")) />
+                                                    }
+                                                    <div class="invalid-feedback">Vui lòng điền trường này.</div>
+                                                </div>
+                                            }
+                                        </div>
+                                        <div class="mt-3">
+                                            <button type="submit" class="btn btn-primary px-4">
+                                                <span class="btn-label">@cfSubmit</span>
+                                                <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+                                            </button>
+                                        </div>
+                                    </form>
+                                    <div id="@(cfFormId)-result" class="d-none mt-3"></div>
+                                    <script>
+                                        (function() {
+                                            var form     = document.getElementById('@cfFormId');
+                                            var resultEl = document.getElementById('@(cfFormId)-result');
+                                            if (!form) return;
+                                            form.addEventListener('submit', function(e) {
+                                                e.preventDefault();
+                                                if (!form.checkValidity()) { form.classList.add('was-validated'); return; }
+                                                var btn = form.querySelector('button[type=submit]');
+                                                var spinner = btn.querySelector('.spinner-border');
+                                                var lbl = btn.querySelector('.btn-label');
+                                                btn.disabled = true; spinner.classList.remove('d-none'); lbl.textContent = 'Đang gửi...';
+                                                var fields = {};
+                                                Array.from(form.querySelectorAll('[name]')).forEach(function(el) { if (el.name) fields[el.name] = el.value; });
+                                                var subjectEl = form.querySelector('input[name="subject"]');
+                                                var subject = subjectEl ? subjectEl.value : '';
+                                                fetch(form.getAttribute('action') || '/api/contact', {
+                                                    method: 'POST',
+                                                    headers: { 'Content-Type': 'application/json' },
+                                                    body: JSON.stringify({ subject: subject, fields: fields })
+                                                })
+                                                .then(function(r) { return r.json(); })
+                                                .then(function(res) {
+                                                    if (res.success) {
+                                                        form.classList.add('d-none');
+                                                        resultEl.className = 'mt-3 alert alert-success';
+                                                        resultEl.innerHTML = '<strong>✓ Đã gửi!</strong> ' + (res.message || 'Chúng tôi sẽ liên hệ lại sớm nhất.');
+                                                    } else {
+                                                        resultEl.className = 'mt-3 alert alert-danger';
+                                                        resultEl.textContent = res.message || 'Có lỗi xảy ra.';
+                                                        btn.disabled = false; spinner.classList.add('d-none'); lbl.textContent = '@(cfBtnText ?? "Gửi")';
+                                                    }
+                                                })
+                                                .catch(function() {
+                                                    resultEl.className = 'mt-3 alert alert-danger';
+                                                    resultEl.textContent = 'Không thể kết nối máy chủ.';
+                                                    btn.disabled = false; spinner.classList.add('d-none'); lbl.textContent = '@(cfBtnText ?? "Gửi")';
+                                                });
+                                            });
+                                        }());
+                                    </script>
+                                }
+                                else
+                                {
+                                    @* Fallback: load fields from API (legacy mode) *@
+                                    var cfApiSubmit = string.IsNullOrWhiteSpace(cfSubmitUrl) ? "/api/contact" : cfSubmitUrl;
+                                    <div id="@(cfFormId)-skeleton" class="row g-3">
+                                        <div class="col-md-6"><div class="placeholder-glow"><span class="placeholder col-12 rounded" style="height:38px"></span></div></div>
+                                        <div class="col-md-6"><div class="placeholder-glow"><span class="placeholder col-12 rounded" style="height:38px"></span></div></div>
+                                        <div class="col-12"><div class="placeholder-glow"><span class="placeholder col-12 rounded" style="height:80px"></span></div></div>
+                                    </div>
+                                    <form id="@cfFormId" class="d-none" novalidate>
+                                        <div id="@(cfFormId)-fields" class="row g-3"></div>
+                                        <div class="mt-3">
+                                            <button type="submit" class="btn btn-primary px-4">
+                                                <span class="btn-label">@(string.IsNullOrWhiteSpace(cfBtnText) ? "Gửi đăng ký" : cfBtnText)</span>
+                                                <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+                                            </button>
+                                        </div>
+                                    </form>
+                                    <div id="@(cfFormId)-result" class="d-none mt-3"></div>
+                                    <script>
+                                        (function () {
+                                            var FORM_ID    = '@cfFormId';
+                                            var API_FIELDS = '/api/contact-fields';
+                                            var API_SUBMIT = '@cfApiSubmit';
+                                            var skeleton = document.getElementById(FORM_ID + '-skeleton');
+                                            var form     = document.getElementById(FORM_ID);
+                                            var fieldsEl = document.getElementById(FORM_ID + '-fields');
+                                            var resultEl = document.getElementById(FORM_ID + '-result');
+                                            var typeMap  = { text: 'text', email: 'email', phone: 'tel', number: 'number', textarea: 'textarea' };
+                                            var colClasses = ['col-md-6', 'col-md-6', 'col-md-6', 'col-md-6', 'col-md-6', 'col-12'];
+                                            function htmlEnc(s) {
+                                                if (s == null) return '';
+                                                return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+                                            }
+                                            fetch(API_FIELDS)
+                                                .then(function(r) { return r.json(); })
+                                                .then(function(fields) {
+                                                    if (!Array.isArray(fields) || fields.length === 0) { skeleton.innerHTML = '<p class="text-muted">Không có trường form.</p>'; return; }
+                                                    skeleton.classList.add('d-none');
+                                                    fields.forEach(function(f, i) {
+                                                        var col = document.createElement('div');
+                                                        col.className = colClasses[i] || 'col-12';
+                                                        var label = '<label class="form-label fw-semibold">' + htmlEnc(f.label) + (f.isRequired ? ' <span class="text-danger">*</span>' : '') + '</label>';
+                                                        var inputHtml;
+                                                        if (f.fieldType === 'textarea') {
+                                                            inputHtml = '<textarea name="' + htmlEnc(f.name) + '" rows="4" class="form-control"' + (f.placeholder ? ' placeholder="' + htmlEnc(f.placeholder) + '"' : '') + (f.isRequired ? ' required' : '') + '></textarea>';
+                                                        } else {
+                                                            var iType = typeMap[f.fieldType] || 'text';
+                                                            inputHtml = '<input type="' + iType + '" name="' + htmlEnc(f.name) + '" class="form-control"' + (f.placeholder ? ' placeholder="' + htmlEnc(f.placeholder) + '"' : '') + (f.isRequired ? ' required' : '') + ' />';
+                                                        }
+                                                        col.innerHTML = label + '<div class="mt-1">' + inputHtml + '</div>' + '<div class="invalid-feedback">Vui lòng điền trường này.</div>';
+                                                        fieldsEl.appendChild(col);
+                                                    });
+                                                    form.classList.remove('d-none');
+                                                })
+                                                .catch(function() { skeleton.innerHTML = '<div class="alert alert-warning">Không thể tải form.</div>'; });
+                                            form.addEventListener('submit', function(e) {
+                                                e.preventDefault();
+                                                if (!form.checkValidity()) { form.classList.add('was-validated'); return; }
+                                                var btn = form.querySelector('button[type=submit]'), spinner = btn.querySelector('.spinner-border'), lbl = btn.querySelector('.btn-label');
+                                                btn.disabled = true; spinner.classList.remove('d-none'); lbl.textContent = 'Đang gửi...';
+                                                var fdata = {};
+                                                Array.from(form.querySelectorAll('[name]')).forEach(function(el) { if (el.name) fdata[el.name] = el.value; });
+                                                fetch(API_SUBMIT, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fields: fdata }) })
+                                                    .then(function(r) { return r.json(); })
+                                                    .then(function(res) {
+                                                        if (res.success) {
+                                                            form.classList.add('d-none');
+                                                            resultEl.className = 'mt-3 alert alert-success';
+                                                            resultEl.innerHTML = '<strong>✓ Đăng ký thành công!</strong> ' + htmlEnc(res.message || 'Chúng tôi sẽ liên hệ lại sớm nhất.');
+                                                        } else {
+                                                            resultEl.className = 'mt-3 alert alert-danger'; resultEl.textContent = res.message || 'Có lỗi xảy ra.';
+                                                            btn.disabled = false; spinner.classList.add('d-none'); lbl.textContent = 'Gửi đăng ký';
+                                                        }
+                                                    })
+                                                    .catch(function() {
+                                                        resultEl.className = 'mt-3 alert alert-danger'; resultEl.textContent = 'Không thể kết nối máy chủ.';
+                                                        btn.disabled = false; spinner.classList.add('d-none'); lbl.textContent = 'Gửi đăng ký';
+                                                    });
+                                            });
+                                        }());
+                                    </script>
+                                }
+                            </div>
+                        </div>
+                        </div>
+                        break;
+                    }
+
+                case "RichText":
+                    @if (secData.TryGetValue("content", out var rtContent))
+                    {
+                        <div class="container">
+                            <div class="page-richtext page-prose" itemprop="text">@Html.Raw(rtContent)</div>
+                        </div>
+                    }
+                    break;
+
+                case "Testimonials":
+                    {
+                        secData.TryGetValue("title", out var tsTitle);
+                        <div class="container">
+                            @if (!string.IsNullOrEmpty(tsTitle))
+                            {
+                                <h2 class="page-testimonials__title">@tsTitle</h2>
+                            }
+                            <div class="page-testimonials__grid">
+                                @for (var i = 1; secData.TryGetValue($"item{i}_name", out var tsName) || secData.TryGetValue($"item{i}_content", out _); i++)
+                                {
+                                    secData.TryGetValue($"item{i}_name", out tsName);
+                                    secData.TryGetValue($"item{i}_role", out var tsRole);
+                                    secData.TryGetValue($"item{i}_content", out var tsContent);
+                                    @if (!string.IsNullOrWhiteSpace(tsName) || !string.IsNullOrWhiteSpace(tsContent))
+                                    {
+                                        <div class="page-testimonial-card">
+                                            @if (!string.IsNullOrWhiteSpace(tsContent))
+                                            {
+                                                <blockquote>
+                                                    <p class="page-testimonial-card__quote">"@tsContent"</p>
+                                                </blockquote>
+                                            }
+                                            @if (!string.IsNullOrWhiteSpace(tsName))
+                                            {
+                                                <footer>
+                                                    <strong>@tsName</strong>
+                                                    @if (!string.IsNullOrWhiteSpace(tsRole))
+                                                    {
+                                                        <span class="page-testimonial-card__role"> · @tsRole</span>
+                                                    }
+                                                </footer>
+                                            }
+                                        </div>
+                                    }
+                                }
+                            </div>
+                        </div>
+                        break;
+                    }
+
+                default:
+                    @* Section type không xác định — render content nếu có *@
+                    @if (secData.TryGetValue("content", out var unknownContent))
+                    {
+                        <div class="mb-4">@Html.Raw(unknownContent)</div>
+                    }
+                    break;
+            }
+        </div>
+    }
+</article>

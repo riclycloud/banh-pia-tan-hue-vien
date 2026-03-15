@@ -1,0 +1,373 @@
+@using SPage.Application.Features.MediaLibrary.DTOs
+@model List<MediaFileDto>
+@{
+    ViewData["Title"] = "Thư viện hình ảnh";
+    string FormatSize(long b) => b switch {
+        >= 1_048_576 => $"{b / 1_048_576.0:F1} MB",
+        >= 1_024     => $"{b / 1_024.0:F0} KB",
+        _            => $"{b} B"
+    };
+}
+
+@section Styles {
+<style>
+.media-card { transition: transform .15s, box-shadow .15s; }
+.media-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.18); }
+.media-overlay { opacity: 0; transition: opacity .2s; }
+.media-card:hover .media-overlay { opacity: 1; }
+.alt-display { cursor: pointer; }
+.alt-display:hover { text-decoration: underline; text-decoration-style: dashed; }
+.drop-active { border-color: #3b82f6 !important; background: rgba(59,130,246,.07); }
+</style>
+}
+
+<div class="p-6 max-w-screen-xl mx-auto">
+
+  @* ── Header ── *@
+  <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+    <div>
+      <h1 class="text-2xl font-bold text-slate-800">Thư viện hình ảnh</h1>
+      <p class="text-sm text-slate-500 mt-0.5">@Model.Count ảnh · Upload và quản lý tập trung</p>
+    </div>
+    <button id="btn-open-upload"
+            class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+      </svg>
+      Upload ảnh
+    </button>
+  </div>
+
+  @* ── Upload zone ── *@
+  <div id="upload-zone"
+       class="mb-6 border-2 border-dashed border-slate-300 rounded-2xl p-8 text-center cursor-pointer hover:border-blue-400 transition-colors"
+       style="display:none">
+    <svg class="w-10 h-10 mx-auto mb-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+    </svg>
+    <p class="text-slate-600 font-medium mb-1">Kéo thả ảnh vào đây hoặc click để chọn</p>
+    <p class="text-xs text-slate-400">JPG, PNG, GIF, WebP, SVG · Tối đa 10 MB / file · Nhiều file cùng lúc</p>
+    <input id="file-input" type="file" multiple accept=".jpg,.jpeg,.png,.gif,.webp,.svg" class="hidden"/>
+    <div id="upload-progress" class="mt-4 space-y-2 text-left text-sm hidden"></div>
+  </div>
+
+  @* ── Search ── *@
+  <div class="mb-5 relative max-w-sm">
+    <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/>
+    </svg>
+    <input id="search-input" type="text" placeholder="Tìm theo tên file..."
+           class="w-full pl-9 pr-4 py-2 text-sm rounded-lg border border-slate-200 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+  </div>
+
+  @* ── Grid ── *@
+  @if (!Model.Any())
+  {
+    <div id="empty-state" class="text-center py-24 text-slate-400">
+      <svg class="w-16 h-16 mx-auto mb-4 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.2"
+              d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+      </svg>
+      <p class="text-lg font-medium">Chưa có ảnh nào</p>
+      <p class="text-sm mt-1">Upload ảnh đầu tiên của bạn</p>
+    </div>
+  }
+
+  <div id="media-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+    @foreach (var f in Model)
+    {
+      <div class="media-card bg-white rounded-xl overflow-hidden shadow-sm border border-slate-100"
+           data-id="@f.Id"
+           data-name="@f.FileName.ToLower()">
+        @* Thumbnail *@
+        <div class="relative bg-slate-100" style="aspect-ratio:1/1">
+          <img src="@f.Url" alt="@f.AltText"
+               class="w-full h-full object-cover"
+               loading="lazy"
+               onerror="this.src='/img/placeholder.svg'"/>
+          @* Hover overlay *@
+          <div class="media-overlay absolute inset-0 bg-black/50 flex flex-col items-center justify-center gap-2 p-2">
+            <button class="btn-copy w-full flex items-center justify-center gap-1.5 bg-white/90 hover:bg-white text-slate-800 text-xs font-medium px-3 py-1.5 rounded-lg"
+                    data-url="@f.Url">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+              </svg>
+              Copy URL
+            </button>
+            <a href="@f.Url" target="_blank"
+               class="w-full flex items-center justify-center gap-1.5 bg-white/70 hover:bg-white/90 text-slate-700 text-xs font-medium px-3 py-1.5 rounded-lg">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+              </svg>
+              Xem gốc
+            </a>
+            <button class="btn-delete w-full flex items-center justify-center gap-1.5 bg-red-500/90 hover:bg-red-600 text-white text-xs font-medium px-3 py-1.5 rounded-lg"
+                    data-id="@f.Id">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+              </svg>
+              Xóa
+            </button>
+          </div>
+        </div>
+        @* Info ──────────────── *@
+        <div class="p-2">
+          <p class="text-xs text-slate-700 truncate font-medium" title="@f.FileName">@f.FileName</p>
+          <p class="text-[10px] text-slate-400 mt-0.5">@FormatSize(f.FileSize)</p>
+          @* Alt text inline edit *@
+          <div class="mt-1.5" data-id="@f.Id">
+            <span class="alt-display text-[11px] text-slate-500 italic"
+                  title="Click để sửa alt text">
+              @(string.IsNullOrEmpty(f.AltText) ? "Thêm alt text..." : f.AltText)
+            </span>
+            <input type="text" class="alt-input hidden text-[11px] border border-blue-300 rounded px-1 py-0.5 w-full outline-none"
+                   value="@f.AltText" placeholder="Alt text..." data-id="@f.Id"/>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+
+  <div id="no-results" class="hidden text-center py-12 text-slate-400 text-sm">Không tìm thấy ảnh nào.</div>
+</div>
+
+@* ── Toast ── *@
+<div id="toast"
+     class="fixed bottom-6 right-6 z-50 flex items-center gap-3 bg-slate-800 text-white text-sm px-4 py-3 rounded-xl shadow-lg transition-all duration-300 opacity-0 translate-y-2 pointer-events-none">
+  <span id="toast-msg"></span>
+</div>
+
+@section Scripts {
+<script>
+(function () {
+    const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value
+                || document.cookie.split('; ').find(r=>r.startsWith('X-XSRF-TOKEN='))?.split('=')[1]
+                || '';
+
+    // ── CSRF token from meta / antiforgery ──
+    function getCsrf() {
+        return document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+    }
+
+    // ── Toast ──
+    function showToast(msg, duration = 2500) {
+        const t = document.getElementById('toast');
+        document.getElementById('toast-msg').textContent = msg;
+        t.classList.remove('opacity-0','translate-y-2','pointer-events-none');
+        t.classList.add('opacity-100','translate-y-0');
+        clearTimeout(t._timer);
+        t._timer = setTimeout(() => {
+            t.classList.add('opacity-0','translate-y-2','pointer-events-none');
+            t.classList.remove('opacity-100','translate-y-0');
+        }, duration);
+    }
+
+    // ── Format file size ──
+    function fmtSize(b) {
+        if (b >= 1048576) return (b/1048576).toFixed(1)+' MB';
+        if (b >= 1024)    return Math.round(b/1024)+' KB';
+        return b+' B';
+    }
+
+    // ── Toggle upload zone ──
+    const uploadZone = document.getElementById('upload-zone');
+    document.getElementById('btn-open-upload').addEventListener('click', () => {
+        const shown = uploadZone.style.display !== 'none';
+        uploadZone.style.display = shown ? 'none' : 'block';
+        if (!shown) uploadZone.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    });
+
+    // ── Click on zone → trigger file input ──
+    const fileInput = document.getElementById('file-input');
+    uploadZone.addEventListener('click', e => {
+        if (e.target !== fileInput && !e.target.closest('button')) fileInput.click();
+    });
+
+    // ── Drag & drop ──
+    uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('drop-active'); });
+    uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drop-active'));
+    uploadZone.addEventListener('drop', e => {
+        e.preventDefault();
+        uploadZone.classList.remove('drop-active');
+        if (e.dataTransfer.files.length) handleFiles(e.dataTransfer.files);
+    });
+    fileInput.addEventListener('change', () => {
+        if (fileInput.files.length) handleFiles(fileInput.files);
+        fileInput.value = '';
+    });
+
+    // ── Upload files ──
+    async function handleFiles(files) {
+        const prog = document.getElementById('upload-progress');
+        prog.innerHTML = '';
+        prog.classList.remove('hidden');
+
+        const fd = new FormData();
+        for (const f of files) fd.append('files', f);
+
+        // Progress bar placeholder
+        const bar = document.createElement('div');
+        bar.className = 'flex items-center gap-3';
+        bar.innerHTML = `<div class="flex-1 bg-slate-100 rounded-full h-2"><div class="bg-blue-500 h-2 rounded-full animate-pulse" style="width:60%"></div></div>
+                         <span class="text-slate-500 text-xs">Đang upload ${files.length} file...</span>`;
+        prog.appendChild(bar);
+
+        try {
+            const res = await fetch('/admin/media-library/upload', {
+                method: 'POST',
+                headers: { 'RequestVerificationToken': getCsrf(), 'X-Requested-With': 'XMLHttpRequest' },
+                body: fd
+            });
+            const data = await res.json();
+
+            prog.innerHTML = '';
+            let successCount = 0;
+
+            for (const r of (data.results || [])) {
+                successCount++;
+                prependCard(r);
+            }
+            for (const err of (data.errors || [])) {
+                const li = document.createElement('p');
+                li.className = 'text-red-500 text-xs';
+                li.textContent = '⚠ ' + err;
+                prog.appendChild(li);
+            }
+
+            if (successCount > 0) {
+                showToast(`✅ Upload thành công ${successCount} ảnh!`);
+                document.getElementById('empty-state')?.remove();
+            }
+
+            setTimeout(() => {
+                prog.classList.add('hidden');
+                if (!data.errors?.length) uploadZone.style.display = 'none';
+            }, 3000);
+
+        } catch {
+            prog.innerHTML = '<p class="text-red-500 text-xs">Upload thất bại. Vui lòng thử lại.</p>';
+        }
+    }
+
+    // ── Prepend newly uploaded card to grid ──
+    function prependCard(r) {
+        const grid = document.getElementById('media-grid');
+        const div = document.createElement('div');
+        div.className = 'media-card bg-white rounded-xl overflow-hidden shadow-sm border border-slate-100';
+        div.dataset.id   = r.id;
+        div.dataset.name = r.fileName.toLowerCase();
+        div.innerHTML = `
+          <div class="relative bg-slate-100" style="aspect-ratio:1/1">
+            <img src="${r.url}" class="w-full h-full object-cover" loading="lazy" onerror="this.src='/img/placeholder.svg'"/>
+            <div class="media-overlay absolute inset-0 bg-black/50 flex flex-col items-center justify-center gap-2 p-2">
+              <button class="btn-copy w-full flex items-center justify-center gap-1.5 bg-white/90 hover:bg-white text-slate-800 text-xs font-medium px-3 py-1.5 rounded-lg" data-url="${r.url}">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                Copy URL
+              </button>
+              <a href="${r.url}" target="_blank" class="w-full flex items-center justify-center gap-1.5 bg-white/70 hover:bg-white/90 text-slate-700 text-xs font-medium px-3 py-1.5 rounded-lg">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                Xem gốc
+              </a>
+              <button class="btn-delete w-full flex items-center justify-center gap-1.5 bg-red-500/90 hover:bg-red-600 text-white text-xs font-medium px-3 py-1.5 rounded-lg" data-id="${r.id}">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                Xóa
+              </button>
+            </div>
+          </div>
+          <div class="p-2">
+            <p class="text-xs text-slate-700 truncate font-medium" title="${r.fileName}">${r.fileName}</p>
+            <p class="text-[10px] text-slate-400 mt-0.5">${fmtSize(r.fileSize)}</p>
+            <div class="mt-1.5" data-id="${r.id}">
+              <span class="alt-display text-[11px] text-slate-500 italic" title="Click để sửa alt text">Thêm alt text...</span>
+              <input type="text" class="alt-input hidden text-[11px] border border-blue-300 rounded px-1 py-0.5 w-full outline-none" placeholder="Alt text..." data-id="${r.id}"/>
+            </div>
+          </div>`;
+        grid.prepend(div);
+        wireCard(div);
+    }
+
+    // ── Wire interactions on a card ──
+    function wireCard(card) {
+        // Copy URL
+        card.querySelector('.btn-copy')?.addEventListener('click', e => {
+            e.stopPropagation();
+            navigator.clipboard.writeText(e.currentTarget.dataset.url)
+                .then(() => showToast('✅ Đã sao chép URL!'))
+                .catch(() => showToast('Không thể sao chép. Hãy thử thủ công.'));
+        });
+
+        // Delete
+        card.querySelector('.btn-delete')?.addEventListener('click', async e => {
+            e.stopPropagation();
+            if (!confirm('Xóa ảnh này khỏi thư viện?')) return;
+            const id = e.currentTarget.dataset.id;
+            try {
+                const fd = new FormData();
+                fd.append('__RequestVerificationToken', getCsrf());
+                await fetch(`/admin/media-library/delete/${id}`, { method: 'POST', body: fd });
+                card.remove();
+                showToast('🗑 Đã xóa ảnh.');
+                if (!document.getElementById('media-grid').children.length) {
+                    document.getElementById('media-grid').insertAdjacentHTML('afterend',
+                        '<div id="empty-state" class="text-center py-24 text-slate-400 text-sm">Thư viện trống.</div>');
+                }
+            } catch { showToast('Xóa thất bại.'); }
+        });
+
+        // Alt text inline edit
+        const altWrap = card.querySelector('[data-id]');
+        const display = card.querySelector('.alt-display');
+        const input   = card.querySelector('.alt-input');
+        if (!display || !input) return;
+
+        display.addEventListener('click', () => {
+            display.classList.add('hidden');
+            input.classList.remove('hidden');
+            input.focus();
+            input.select();
+        });
+
+        async function saveAlt() {
+            const id  = input.dataset.id;
+            const val = input.value.trim();
+            display.textContent = val || 'Thêm alt text...';
+            display.classList.remove('hidden');
+            input.classList.add('hidden');
+            try {
+                await fetch(`/admin/media-library/update-alt/${id}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': getCsrf() },
+                    body: JSON.stringify({ altText: val })
+                });
+            } catch { /* silent */ }
+        }
+
+        input.addEventListener('blur', saveAlt);
+        input.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); input.blur(); } });
+    }
+
+    // ── Wire existing cards ──
+    document.querySelectorAll('.media-card').forEach(wireCard);
+
+    // ── Search ──
+    document.getElementById('search-input').addEventListener('input', function () {
+        const q = this.value.trim().toLowerCase();
+        let visible = 0;
+        document.querySelectorAll('.media-card').forEach(card => {
+            const match = !q || card.dataset.name.includes(q);
+            card.style.display = match ? '' : 'none';
+            if (match) visible++;
+        });
+        document.getElementById('no-results').classList.toggle('hidden', visible > 0 || !q);
+    });
+})();
+</script>
+
+@* Antiforgery token needed for JS fetch calls *@
+<form style="display:none">@Html.AntiForgeryToken()</form>
+}

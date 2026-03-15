@@ -1,0 +1,7 @@
+@model SPage.Domain.Entities.Seo.SiteSettings
+
+@if (!string.IsNullOrWhiteSpace(Model.CustomFooterHtml))
+{
+    @Html.Raw(Model.CustomFooterHtml)
+}
+

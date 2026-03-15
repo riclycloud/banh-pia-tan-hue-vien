@@ -1,0 +1,65 @@
+@using SPage.Domain.Entities.Navigation
+@model MenuLocation
+@{
+    ViewData["Title"] = "Sửa vị trí menu";
+}
+
+<div class="flex items-center gap-2 mb-5 text-sm">
+    <a asp-action="Index" class="text-slate-400 hover:text-blue-600 transition-colors">Vị trí menu</a>
+    <svg class="w-3.5 h-3.5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m9 18 6-6-6-6" />
+    </svg>
+    <span class="text-slate-600 font-medium">@Model.Name</span>
+</div>
+
+<form asp-action="Edit" asp-route-id="@Model.Id" method="post" class="max-w-lg">
+    @Html.AntiForgeryToken()
+    <input asp-for="Id" type="hidden" />
+
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-4">
+        <div>
+            <label asp-for="Name" class="block mb-1.5 text-[13px] font-medium text-slate-600">
+                Tên vị trí <span class="text-red-500">*</span>
+            </label>
+            <input asp-for="Name" required
+                   class="block w-full px-3 py-2.5 text-sm bg-white border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" />
+            <span asp-validation-for="Name" class="text-xs text-red-500 mt-1 block"></span>
+        </div>
+
+        <div>
+            <label asp-for="Key" class="block mb-1.5 text-[13px] font-medium text-slate-600">
+                Key (slug) <span class="text-red-500">*</span>
+            </label>
+            <input asp-for="Key" required
+                   class="block w-full px-3 py-2.5 text-sm bg-white border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors font-mono" />
+            <p class="text-xs text-slate-400 mt-1">Thay đổi key sẽ ảnh hưởng đến nơi gọi menu trong template.</p>
+            <span asp-validation-for="Key" class="text-xs text-red-500 mt-1 block"></span>
+        </div>
+
+        <div>
+            <label asp-for="SortOrder" class="block mb-1.5 text-[13px] font-medium text-slate-600">Thứ tự</label>
+            <input asp-for="SortOrder" type="number"
+                   class="block w-32 px-3 py-2.5 text-sm bg-white border border-slate-200 rounded-xl text-slate-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" />
+        </div>
+
+        <div class="flex items-center gap-2.5">
+            <input asp-for="IsActive" type="checkbox" class="w-4 h-4 accent-blue-600 border-slate-300 rounded" />
+            <label asp-for="IsActive" class="text-[13px] text-slate-600 cursor-pointer">Hiển thị</label>
+        </div>
+    </div>
+
+    <div class="flex gap-2 mt-4">
+        <button type="submit"
+                class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-colors shadow-sm">
+            Cập nhật
+        </button>
+        <a asp-action="Index"
+           class="px-4 py-2 text-sm font-medium text-slate-600 bg-slate-100 rounded-xl hover:bg-slate-200 transition-colors">
+            Hủy
+        </a>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -1,0 +1,83 @@
+@using SPage.Domain.Entities.Navigation
+@model IEnumerable<MenuItem>
+@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Antiforgery
+@{
+    ViewData["Title"] = "Menu điều hướng";
+    var locationId = ViewBag.LocationId as int?;
+    var locations = ViewBag.Locations as IEnumerable<MenuLocation> ?? [];
+    var tokens = Antiforgery.GetAndStoreTokens(Context);
+}
+
+<div class="flex items-center justify-between mb-5">
+    <div>
+        <h1 class="text-xl font-bold text-slate-800">Menu điều hướng</h1>
+        <p class="text-sm text-slate-500 mt-0.5">
+            Quản lý các liên kết menu ở Header, Footer, Sidebar...
+        </p>
+    </div>
+    <div class="flex items-center gap-2">
+        <a asp-area="Admin" asp-controller="MenuLocations" asp-action="Index"
+           class="px-3 py-2 text-xs font-medium text-slate-600 bg-slate-100 rounded-xl hover:bg-slate-200 transition-colors">
+            Vị trí menu
+        </a>
+        <a asp-action="Edit"
+           class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-colors shadow-sm">
+            + Thêm menu
+        </a>
+    </div>
+</div>
+
+<div class="flex items-center gap-2 mb-4 flex-wrap">
+    <span class="text-sm text-slate-600">Vị trí:</span>
+    <a asp-action="Index" asp-route-locationId=""
+       class="px-3 py-1.5 text-xs rounded-xl border @(locationId is null ? "bg-blue-600 text-white border-blue-600" : "text-slate-600 border-slate-300 hover:bg-slate-100")">
+        Tất cả
+    </a>
+    @foreach (var loc in locations)
+    {
+        <a asp-action="Index" asp-route-locationId="@loc.Id"
+           class="px-3 py-1.5 text-xs rounded-xl border @(locationId == loc.Id ? "bg-blue-600 text-white border-blue-600" : "text-slate-600 border-slate-300 hover:bg-slate-100")">
+            @loc.Name
+        </a>
+    }
+</div>
+
+<div class="relative bg-white shadow-sm rounded-2xl border border-slate-200 p-4">
+    <p class="mb-3 text-xs text-slate-500">
+        Kéo thả để sắp xếp lại thứ tự và cấu trúc menu (menu con). Sau khi kéo thả xong, nhấn
+        <span class="font-semibold text-slate-700">Lưu sắp xếp</span>.
+    </p>
+    <input type="hidden" id="menu-reorder-token" value="@tokens.RequestToken" />
+    <div id="menu-tree"
+         class="space-y-1 text-sm text-slate-700"
+         data-reorder-url="@Url.Action("Reorder", "Menu", new { area = "Admin" })">
+        @if (!Model.Any())
+        {
+            <div class="px-4 py-8 text-center text-slate-400">
+                Chưa có menu nào. Nhấn <strong>Thêm menu</strong> để bắt đầu.
+            </div>
+        }
+        else
+        {
+            <ul class="border border-dashed border-slate-200 rounded-xl p-3 space-y-1" data-level="0">
+                @foreach (var item in Model.OrderBy(m => m.SortOrder))
+                {
+                    <partial name="_MenuItemNode" model="item" />
+                }
+            </ul>
+        }
+    </div>
+    <div class="mt-4 flex justify-end">
+        <button type="button" id="save-order-btn"
+                class="inline-flex items-center gap-2 px-4 py-2 text-xs font-medium text-white bg-blue-600 rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+            </svg>
+            Lưu sắp xếp
+        </button>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/admin-menu.js"></script>
+}

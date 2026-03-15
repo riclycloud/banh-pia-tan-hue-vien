@@ -1,0 +1,57 @@
+/* ★ CSS Custom Properties — Design Tokens */
+:root {
+    /* Brand Colors */
+    --color-primary:       #eec976;
+    --color-primary-dark:  #c9a23e;
+    --color-primary-light: #f5dc9e;
+    --color-secondary:     #d4a940;
+    --color-green:         #2d6a1f;
+    --color-green-light:   #e8f5e3;
+
+    --color-text:          #1a1a1a;
+    --color-text-muted:    #6b7280;
+    --color-text-light:    #9ca3af;
+    --color-bg:            #ffffff;
+    --color-bg-alt:        #f5f5f5;
+    --color-bg-dark:       #1a1506;
+    --color-border:        #e5e7eb;
+
+    /* Typography */
+    --font-sans: 'Courier New', Courier, monospace;
+    --font-size-xs:   0.75rem;
+    --font-size-sm:   0.875rem;
+    --font-size-base: 1rem;
+    --font-size-lg:   1.125rem;
+    --font-size-xl:   1.25rem;
+    --font-size-2xl:  1.5rem;
+    --font-size-3xl:  1.875rem;
+    --font-size-4xl:  2.25rem;
+    --font-size-5xl:  3rem;
+
+    /* Spacing */
+    --spacing-1:  0.25rem;  --spacing-2:  0.5rem;
+    --spacing-3:  0.75rem;  --spacing-4:  1rem;
+    --spacing-5:  1.25rem;  --spacing-6:  1.5rem;
+    --spacing-8:  2rem;     --spacing-10: 2.5rem;
+    --spacing-12: 3rem;     --spacing-16: 4rem;
+    --spacing-20: 5rem;     --spacing-24: 6rem;
+
+    /* Border Radius */
+    --radius-sm: 0.25rem;  --radius-md: 0.5rem;
+    --radius-lg: 0.75rem;  --radius-xl: 1rem;
+    --radius-2xl:1.5rem;   --radius-full: 9999px;
+
+    /* Shadows */
+    --shadow-sm:  0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow-md:  0 4px 6px -1px rgb(0 0 0 / 0.1);
+    --shadow-lg:  0 10px 15px -3px rgb(0 0 0 / 0.1);
+    --shadow-xl:  0 20px 25px -5px rgb(0 0 0 / 0.15);
+
+    /* Transitions */
+    --transition:    200ms ease;
+    --transition-md: 300ms ease;
+
+    /* Header */
+    --utility-height: 38px;
+    --header-height:  56px;
+}

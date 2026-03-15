@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+
+  <!-- Navigation -->
+  <data name="Nav_Home"><value>Home</value></data>
+  <data name="Nav_Blog"><value>News</value></data>
+  <data name="Nav_Products"><value>Products</value></data>
+  <data name="Nav_About"><value>About</value></data>
+  <data name="Nav_Contact"><value>Contact</value></data>
+
+  <!-- Posts -->
+  <data name="Posts_PageTitle"><value>News &amp; Blog</value></data>
+  <data name="Posts_Heading"><value>Latest Posts</value></data>
+  <data name="Posts_ReadMore"><value>Read more</value></data>
+  <data name="Posts_PublishedOn"><value>Published on {0}</value></data>
+  <data name="Posts_Category"><value>Category</value></data>
+  <data name="Posts_Tags"><value>Tags</value></data>
+  <data name="Posts_Author"><value>Author</value></data>
+  <data name="Posts_ViewCount"><value>{0} views</value></data>
+  <data name="Posts_Search"><value>Search posts...</value></data>
+  <data name="Posts_NoResults"><value>No posts found.</value></data>
+
+  <!-- Products -->
+  <data name="Products_PageTitle"><value>Products</value></data>
+  <data name="Products_Heading"><value>Product Catalog</value></data>
+  <data name="Products_Price"><value>Price</value></data>
+  <data name="Products_SalePrice"><value>Sale price</value></data>
+  <data name="Products_AddToCart"><value>Add to cart</value></data>
+  <data name="Products_OutOfStock"><value>Out of stock</value></data>
+  <data name="Products_NoResults"><value>No products found.</value></data>
+  <data name="Products_SortBy"><value>Sort by</value></data>
+  <data name="Products_Sort_Newest"><value>Newest</value></data>
+  <data name="Products_Sort_PriceAsc"><value>Price: low to high</value></data>
+  <data name="Products_Sort_PriceDesc"><value>Price: high to low</value></data>
+  <data name="Products_Sort_NameAsc"><value>Name A-Z</value></data>
+
+  <!-- Pagination -->
+  <data name="Pagination_Label"><value>Pagination</value></data>
+  <data name="Pagination_Prev"><value>Previous</value></data>
+  <data name="Pagination_Next"><value>Next</value></data>
+  <data name="Pagination_Page"><value>Page {0} of {1}</value></data>
+
+  <!-- Common -->
+  <data name="Home"><value>Home</value></data>
+  <data name="Search"><value>Search</value></data>
+  <data name="Submit"><value>Submit</value></data>
+  <data name="Cancel"><value>Cancel</value></data>
+  <data name="Save"><value>Save</value></data>
+  <data name="Delete"><value>Delete</value></data>
+  <data name="Edit"><value>Edit</value></data>
+  <data name="Back"><value>Back</value></data>
+  <data name="Loading"><value>Loading...</value></data>
+  <data name="Error_NotFound"><value>The requested page was not found.</value></data>
+  <data name="Error_Generic"><value>An error occurred. Please try again.</value></data>
+  <data name="Footer_Copyright"><value>SPage CMS. All rights reserved.</value></data>
+
+  <!-- Language -->
+  <data name="Language_Vietnamese"><value>Tiếng Việt</value></data>
+  <data name="Language_English"><value>English</value></data>
+  <data name="Language_SwitchTo"><value>Switch to</value></data>
+
+  <!-- Contact -->
+  <data name="Contact_Heading"><value>Contact Us</value></data>
+  <data name="Contact_Name"><value>Full Name</value></data>
+  <data name="Contact_Email"><value>Email Address</value></data>
+  <data name="Contact_Phone"><value>Phone Number</value></data>
+  <data name="Contact_Message"><value>Message</value></data>
+  <data name="Contact_Send"><value>Send Message</value></data>
+  <data name="Contact_Success"><value>Your message has been sent successfully!</value></data>
+
+  <!-- Validation -->
+  <data name="Validation_Required"><value>This field is required.</value></data>
+  <data name="Validation_Email"><value>Invalid email address.</value></data>
+  <data name="Validation_MaxLength"><value>Maximum {0} characters.</value></data>
+  <data name="Validation_MinLength"><value>Minimum {0} characters.</value></data>
+  <data name="Accessibility_SkipToContent"><value>Skip to main content</value></data>
+  <data name="Brand_Name"><value>SPage</value></data>
+</root>

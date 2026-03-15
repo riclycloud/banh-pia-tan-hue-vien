@@ -1,0 +1,84 @@
+@using SPage.Domain.Entities.Contact
+@model IEnumerable<ContactField>
+@{
+    ViewData["Title"] = "Liên hệ";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages.css" asp-append-version="true" />
+}
+
+<div class="hd-container public-page">
+    <header class="public-page__header">
+        <h1 class="public-page__title public-page__title--accent">@ViewData["Title"]</h1>
+        <p class="public-page__subtitle">Gửi tin nhắn cho chúng tôi — phản hồi trong thời gian sớm nhất.</p>
+    </header>
+
+    @if (TempData["Success"] is string success)
+    {
+        <div class="alert alert-success">@success</div>
+    }
+
+    @if (ViewBag.Errors is List<string> errors && errors.Any())
+    {
+        <div class="alert alert-danger">
+            <ul class="mb-0">
+                @foreach (var e in errors)
+                {
+                    <li>@e</li>
+                }
+            </ul>
+        </div>
+    }
+
+    <form asp-action="Index" method="post" class="row g-4" style="max-width: 36rem;">
+    @Html.AntiForgeryToken()
+
+    @foreach (var field in Model)
+    {
+        <div class="col-12">
+            <label class="form-label">
+                @field.Label
+                @if (field.IsRequired)
+                {
+                    <span class="text-danger">*</span>
+                }
+            </label>
+
+            @{
+                var name = field.Name;
+                var placeholder = field.Placeholder ?? "";
+                var value = Context.Request.HasFormContentType
+                    ? (string?)Context.Request.Form[name]
+                    : null;
+            }
+
+            @switch (field.FieldType)
+            {
+                case ContactFieldType.TextArea:
+                    <textarea name="@name" class="form-control" placeholder="@placeholder" rows="3">@value</textarea>
+                    break;
+                case ContactFieldType.Email:
+                    <input name="@name" type="email" class="form-control" placeholder="@placeholder" value="@value" />
+                    break;
+                case ContactFieldType.Phone:
+                    <input name="@name" type="tel" class="form-control" placeholder="@placeholder" value="@value" />
+                    break;
+                case ContactFieldType.Number:
+                    <input name="@name" type="number" class="form-control" placeholder="@placeholder" value="@value" />
+                    break;
+                default:
+                    <input name="@name" type="text" class="form-control" placeholder="@placeholder" value="@value" />
+                    break;
+            }
+        </div>
+    }
+
+    <div class="col-12">
+        <button type="submit" class="btn btn-primary">
+            Gửi liên hệ
+        </button>
+    </div>
+    </form>
+</div>
+

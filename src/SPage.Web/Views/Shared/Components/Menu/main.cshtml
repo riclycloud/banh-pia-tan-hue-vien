@@ -1,0 +1,37 @@
+@model IEnumerable<SPage.Domain.Entities.Navigation.MenuItem>
+
+@{
+    var path = Context.Request.Path.Value ?? "/";
+    Func<string, string> IsActive = p =>
+        (!string.IsNullOrEmpty(p) && (p == "/" ? path == "/" : path.StartsWith(p, StringComparison.OrdinalIgnoreCase)))
+            ? "active" : "";
+}
+
+@foreach (var item in Model)
+{
+    var hasChildren = item.Children != null && item.Children.Any();
+    <li class="main-nav__item @IsActive(item.Url)">
+        <a href="@item.Url" class="main-nav__link"
+           @(item.OpenInNewTab ? Html.Raw("target=\"_blank\" rel=\"noopener\"") : Html.Raw(""))>
+            <span>@item.Title</span>
+            @if (hasChildren)
+            {
+                <svg class="main-nav__chevron" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="m6 9 6 6 6-6" />
+                </svg>
+            }
+        </a>
+        @if (hasChildren)
+        {
+            <div class="main-nav__dropdown">
+                @foreach (var child in item.Children!.OrderBy(c => c.SortOrder).Where(c => c.IsActive))
+                {
+                    <a href="@child.Url" class="main-nav__dropdown-item"
+                       @(child.OpenInNewTab ? Html.Raw("target=\"_blank\" rel=\"noopener\"") : Html.Raw(""))>
+                        @child.Title
+                    </a>
+                }
+            </div>
+        }
+    </li>
+}

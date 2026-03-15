@@ -1,0 +1,130 @@
+@using SPage.Domain.Entities.Contact
+@model ContactMessage
+@{
+ ViewData["Title"] = "Chi tiết liên hệ";
+ var data = new Dictionary<string, string>();
+ if (!string.IsNullOrWhiteSpace(Model.DataJson))
+ {
+ try
+ {
+ data = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(Model.DataJson)
+ ?? new Dictionary<string, string>();
+ }
+ catch { data = new Dictionary<string, string>(); }
+ }
+}
+
+<div class="mb-5">
+ <h1 class="text-xl font-bold text-slate-800">Chi tiết liên hệ #@Model.Id</h1>
+ <p class="text-sm text-slate-500 mt-0.5">Xem và cập nhật trạng thái tin nhắn.</p>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+ <div class="p-5 bg-white border border-slate-200 rounded-2xl shadow-sm">
+ <h3 class="mb-3 text-sm font-semibold text-slate-800">Thông tin chung</h3>
+ <dl class="text-sm text-slate-700 space-y-1">
+ <div class="flex">
+ <dt class="w-32 font-medium">Thời gian</dt>
+ <dd>@Model.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</dd>
+ </div>
+ <div class="flex">
+ <dt class="w-32 font-medium">Tiêu đề / Form</dt>
+ <dd>@(Model.Subject ?? "—")</dd>
+ </div>
+ <div class="flex">
+ <dt class="w-32 font-medium">Họ tên</dt>
+ <dd>@(Model.SenderName ?? "—")</dd>
+ </div>
+ <div class="flex">
+ <dt class="w-32 font-medium">Email</dt>
+ <dd>@(Model.SenderEmail ?? "—")</dd>
+ </div>
+ <div class="flex">
+ <dt class="w-32 font-medium">SĐT</dt>
+ <dd>@(Model.SenderPhone ?? "—")</dd>
+ </div>
+ <div class="flex">
+ <dt class="w-32 font-medium">IP</dt>
+ <dd>@(Model.SenderIp ?? "—")</dd>
+ </div>
+ <div class="flex items-center">
+ <dt class="w-32 font-medium">Trạng thái</dt>
+ <dd>
+ @switch (Model.Status)
+ {
+ case ContactMessageStatus.New:
+ <span class="px-2 py-0.5 text-xs font-medium rounded-full bg-blue-100 text-blue-800">Mới</span>
+ break;
+ case ContactMessageStatus.InProgress:
+ <span class="px-2 py-0.5 text-xs font-medium rounded-full bg-amber-100 text-amber-700">Đang xử lý</span>
+ break;
+ case ContactMessageStatus.Resolved:
+ <span class="px-2 py-0.5 text-xs font-medium rounded-full bg-emerald-100 text-emerald-700">Đã xử lý</span>
+ break;
+ case ContactMessageStatus.Archived:
+ <span class="px-2 py-0.5 text-xs font-medium rounded-full bg-slate-100 text-slate-600">Lưu trữ</span>
+ break;
+ }
+ </dd>
+ </div>
+ </dl>
+ </div>
+
+ <div class="p-5 bg-white border border-slate-200 rounded-2xl shadow-sm">
+ <h3 class="mb-3 text-sm font-semibold text-slate-800">Cập nhật trạng thái</h3>
+ <form asp-action="UpdateStatus" method="post" class="space-y-3">
+ @Html.AntiForgeryToken()
+ <input type="hidden" name="id" value="@Model.Id" />
+
+ <div>
+ <label class="block mb-1.5 text-[13px] font-medium text-slate-600">Trạng thái</label>
+ <select name="status" class="block w-full px-3 py-2.5 text-sm bg-white border border-slate-200 rounded-xl text-slate-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+ @foreach (ContactMessageStatus s in Enum.GetValues(typeof(ContactMessageStatus)))
+ {
+ <option value="@s" selected="@(s == Model.Status)">@s</option>
+ }
+ </select>
+ </div>
+
+ <div>
+ <label class="block mb-1.5 text-[13px] font-medium text-slate-600">Ghi chú</label>
+ <textarea name="notes" rows="3" class="block w-full px-3 py-2.5 text-sm bg-white border border-slate-200 rounded-xl text-slate-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">@Model.Notes</textarea>
+ </div>
+
+ <button type="submit" class="px-4 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-colors shadow-sm">
+ Lưu trạng thái
+ </button>
+ </form>
+ </div>
+</div>
+
+<div class="p-5 bg-white border border-slate-200 rounded-2xl shadow-sm">
+ <h3 class="mb-3 text-sm font-semibold text-slate-800">Nội dung form</h3>
+ <div class="rounded-xl overflow-hidden border border-slate-200">
+ <table class="w-full text-sm text-left">
+ <thead>
+ <tr>
+ <th class="bg-slate-50 px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-slate-500 border-b border-slate-200">Trường</th>
+ <th class="bg-slate-50 px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-slate-500 border-b border-slate-200">Giá trị</th>
+ </tr>
+ </thead>
+ <tbody>
+ @foreach (var kv in data)
+ {
+ <tr class="border-b border-slate-100 hover:bg-slate-50/60">
+ <td class="px-4 py-2 font-mono text-xs text-slate-500">@kv.Key</td>
+ <td class="px-4 py-2 text-slate-700">@kv.Value</td>
+ </tr>
+ }
+ </tbody>
+ </table>
+ </div>
+</div>
+
+<div class="mt-5">
+ <a asp-action="Index" class="inline-flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-slate-800 transition-colors">
+ <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+ Quay lại danh sách
+ </a>
+</div>
+

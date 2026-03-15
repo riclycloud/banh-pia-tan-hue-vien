@@ -1,0 +1,105 @@
+@using SPage.Domain.Entities.Store
+@model IEnumerable<StoreLocation>
+@{
+ ViewData["Title"] = "Địa chỉ cửa hàng";
+ var region = ViewBag.Region as StoreRegionType?;
+}
+
+<div class="flex items-center justify-between mb-4">
+ <div>
+ <h2 class="text-xl font-bold text-gray-800 ">Địa chỉ cửa hàng</h2>
+ <p class="mt-1 text-sm text-gray-500 ">
+ Quản lý danh sách địa điểm (đại lý, siêu thị, showroom...) trong nước và ngoài nước.
+ </p>
+ </div>
+ <a asp-action="Edit" class="px-4 py-2 text-sm text-white bg-primary-600 rounded-lg hover:bg-primary-700">
+ + Thêm địa chỉ
+ </a>
+</div>
+
+<div class="flex items-center gap-2 mb-4">
+ <span class="text-sm text-gray-600 ">Khu vực:</span>
+ <a asp-action="Index" asp-route-region=""
+ class="px-3 py-1.5 text-xs rounded-lg border @(region is null ? "bg-primary-600 text-white border-primary-600" : "text-gray-600 border-gray-300 hover:bg-gray-100 :bg-gray-700")">
+ Tất cả
+ </a>
+ @foreach (StoreRegionType r in Enum.GetValues(typeof(StoreRegionType)))
+ {
+ <a asp-action="Index" asp-route-region="@r"
+ class="px-3 py-1.5 text-xs rounded-lg border @(region == r ? "bg-primary-600 text-white border-primary-600" : "text-gray-600 border-gray-300 hover:bg-gray-100 :bg-gray-700")">
+ @r
+ </a>
+ }
+</div>
+
+<div class="relative overflow-x-auto shadow rounded-lg">
+ <table class="w-full text-sm text-left text-gray-500 ">
+ <thead class="text-xs text-gray-700 uppercase bg-gray-50 ">
+ <tr>
+ <th class="px-4 py-3">Tên</th>
+ <th class="px-4 py-3">Địa chỉ</th>
+ <th class="px-4 py-3">Tỉnh/Thành</th>
+ <th class="px-4 py-3">Quốc gia</th>
+ <th class="px-4 py-3">Loại</th>
+ <th class="px-4 py-3">Khu vực</th>
+ <th class="px-4 py-3">Điện thoại</th>
+ <th class="px-4 py-3">Quản lý</th>
+ <th class="px-4 py-3 text-center">Hiển thị</th>
+ <th class="px-4 py-3 text-right">Thao tác</th>
+ </tr>
+ </thead>
+ <tbody>
+ @foreach (var s in Model)
+ {
+ <tr class="bg-white border-b hover:bg-gray-50 :bg-gray-700">
+ <td class="px-4 py-3 font-medium text-gray-900 ">@s.Name</td>
+ <td class="px-4 py-3">@s.FullAddress</td>
+ <td class="px-4 py-3">@s.ProvinceOrCity</td>
+ <td class="px-4 py-3">@s.Country</td>
+ <td class="px-4 py-3">@s.LocationType</td>
+ <td class="px-4 py-3">@s.RegionType</td>
+ <td class="px-4 py-3">
+ @if (!string.IsNullOrWhiteSpace(s.LandlinePhone))
+ {
+ <div>ĐT bàn: @s.LandlinePhone</div>
+ }
+ @if (!string.IsNullOrWhiteSpace(s.MobilePhone))
+ {
+ <div>Di động: @s.MobilePhone</div>
+ }
+ </td>
+ <td class="px-4 py-3">@s.ManagerName</td>
+ <td class="px-4 py-3 text-center">
+ @if (s.IsActive)
+ {
+ <span class="px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-800">Hiển thị</span>
+ }
+ else
+ {
+ <span class="px-2 py-0.5 text-xs font-medium rounded-full bg-gray-100 text-gray-600">Ẩn</span>
+ }
+ </td>
+ <td class="px-4 py-3 text-right space-x-2">
+ <a asp-action="Edit" asp-route-id="@s.Id"
+ class="text-sm text-primary-600 hover:underline">Sửa</a>
+ <form asp-action="Delete" asp-route-id="@s.Id" method="post" class="inline"
+ onsubmit="return confirm('Xóa địa chỉ này?');">
+ @Html.AntiForgeryToken()
+ <button type="submit" class="text-sm text-red-600 hover:underline">Xóa</button>
+ </form>
+ </td>
+ </tr>
+ }
+
+ @if (!Model.Any())
+ {
+ <tr>
+ <td colspan="10" class="px-4 py-8 text-center text-gray-400">
+ Chưa có địa chỉ cửa hàng nào.
+ </td>
+ </tr>
+ }
+ </tbody>
+ </table>
+</div>
+

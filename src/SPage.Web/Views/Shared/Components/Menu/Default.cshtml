@@ -1,0 +1,32 @@
+@model IEnumerable<SPage.Domain.Entities.Navigation.MenuItem>
+
+<ul class="nav">
+@foreach (var item in Model)
+{
+    var hasChildren = item.Children != null && item.Children.Any();
+    <li class="nav-item @(hasChildren ? "dropdown" : "")">
+        <a class="nav-link text-dark @(hasChildren ? "dropdown-toggle" : "")"
+           href="@item.Url"
+           @(item.OpenInNewTab ? "target=\"_blank\"" : "")>
+            @item.Title
+        </a>
+
+        @if (hasChildren)
+        {
+            <ul class="dropdown-menu bg-white">
+                @foreach (var child in (item.Children ?? []).OrderBy(c => c.SortOrder))
+                {
+                    <li>
+                        <a class="dropdown-item text-dark"
+                           href="@child.Url"
+                           @(child.OpenInNewTab ? "target=\"_blank\"" : "")>
+                            @child.Title
+                        </a>
+                    </li>
+                }
+            </ul>
+        }
+    </li>
+}
+</ul>
+

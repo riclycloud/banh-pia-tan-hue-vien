@@ -1,0 +1,103 @@
+@using SPage.Domain.Entities.Contact
+@model IEnumerable<ContactMessage>
+@{
+ ViewData["Title"] = "Hộp thư liên hệ";
+ var status = ViewBag.Status as ContactMessageStatus?;
+}
+
+@* ── Page Header ──────────────────────────────────────────────────────────── *@
+<div class="flex items-center justify-between mb-5">
+ <div>
+ <h1 class="text-xl font-bold text-slate-800">Hộp thư liên hệ</h1>
+ <p class="text-sm text-slate-500 mt-0.5">Danh sách form liên hệ khách đã gửi và trạng thái xử lý.</p>
+ </div>
+</div>
+
+@* ── Filter ───────────────────────────────────────────────────────────────── *@
+<div class="flex items-center gap-2 mb-4">
+ <span class="text-sm text-slate-600">Lọc theo trạng thái:</span>
+ <a asp-action="Index" asp-route-status=""
+ class="px-3 py-1.5 text-xs font-medium rounded-xl border transition-colors @(status is null ? "bg-blue-600 text-white border-blue-600" : "text-slate-600 border-slate-300 hover:bg-slate-100")">
+ Tất cả
+ </a>
+ @foreach (ContactMessageStatus s in Enum.GetValues(typeof(ContactMessageStatus)))
+ {
+ <a asp-action="Index" asp-route-status="@s"
+ class="px-3 py-1.5 text-xs font-medium rounded-xl border transition-colors @(status == s ? "bg-blue-600 text-white border-blue-600" : "text-slate-600 border-slate-300 hover:bg-slate-100")">
+ @s
+ </a>
+ }
+</div>
+
+@* ── Table ─────────────────────────────────────────────────────────────────── *@
+<div class="rounded-2xl overflow-hidden border border-slate-200 shadow-sm bg-white">
+ <table class="w-full text-sm text-left">
+ <thead>
+ <tr>
+ <th class="bg-slate-50 px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-slate-500 border-b border-slate-200">Thời gian</th>
+ <th class="bg-slate-50 px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-slate-500 border-b border-slate-200">Tiêu đề / Form</th>
+ <th class="bg-slate-50 px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-slate-500 border-b border-slate-200 hidden sm:table-cell">Khách hàng</th>
+ <th class="bg-slate-50 px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-slate-500 border-b border-slate-200 hidden md:table-cell">Email</th>
+ <th class="bg-slate-50 px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-slate-500 border-b border-slate-200 hidden lg:table-cell">SĐT</th>
+ <th class="bg-slate-50 px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-slate-500 border-b border-slate-200 text-center">Trạng thái</th>
+ <th class="bg-slate-50 px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-slate-500 border-b border-slate-200 text-right">Thao tác</th>
+ </tr>
+ </thead>
+ <tbody>
+ @foreach (var m in Model)
+ {
+ <tr class="border-b border-slate-100 hover:bg-slate-50/60 transition-colors">
+ <td class="px-4 py-3 text-slate-600 whitespace-nowrap text-[13px]">
+ @m.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+ </td>
+ <td class="px-4 py-3 font-medium text-slate-800">@(m.Subject ?? "—")</td>
+ <td class="px-4 py-3 text-slate-600 hidden sm:table-cell">
+ @(!string.IsNullOrWhiteSpace(m.SenderName) ? m.SenderName : "(Không rõ)")
+ </td>
+ <td class="px-4 py-3 text-slate-600 hidden md:table-cell">@m.SenderEmail</td>
+ <td class="px-4 py-3 text-slate-600 hidden lg:table-cell">@(m.SenderPhone ?? "—")</td>
+ <td class="px-4 py-3 text-center">
+ @switch (m.Status)
+ {
+ case ContactMessageStatus.New:
+ <span class="px-2.5 py-0.5 text-xs font-medium rounded-full bg-blue-100 text-blue-700">Mới</span>
+ break;
+ case ContactMessageStatus.InProgress:
+ <span class="px-2.5 py-0.5 text-xs font-medium rounded-full bg-amber-100 text-amber-700">Đang xử lý</span>
+ break;
+ case ContactMessageStatus.Resolved:
+ <span class="px-2.5 py-0.5 text-xs font-medium rounded-full bg-emerald-100 text-emerald-700">Đã xử lý</span>
+ break;
+ case ContactMessageStatus.Archived:
+ <span class="px-2.5 py-0.5 text-xs font-medium rounded-full bg-slate-100 text-slate-600">Lưu trữ</span>
+ break;
+ }
+ </td>
+ <td class="px-4 py-3 text-right">
+ <a asp-action="Detail" asp-route-id="@m.Id"
+ class="inline-flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 px-2.5 py-1.5 rounded-lg transition-colors">
+ <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+ <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+ </svg>
+ Xem
+ </a>
+ </td>
+ </tr>
+ }
+
+ @if (!Model.Any())
+ {
+ <tr>
+ <td colspan="7" class="px-4 py-12 text-center">
+ <div class="flex flex-col items-center gap-2 text-slate-400">
+ <svg class="w-10 h-10 opacity-40" fill="currentColor" viewBox="0 0 20 20">
+ <path d="M2 3a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h4.586a2 2 0 0 1 1.414.586L10 19.172l2-2A2 2 0 0 1 13.414 16H18a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2Z"/>
+ </svg>
+ <p class="text-sm">Chưa có liên hệ nào.</p>
+ </div>
+ </td>
+ </tr>
+ }
+ </tbody>
+ </table>
+</div>

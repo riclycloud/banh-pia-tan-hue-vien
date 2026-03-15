@@ -1,0 +1,19 @@
+@model IEnumerable<SPage.Domain.Entities.Navigation.MenuItem>
+
+@foreach (var item in Model)
+{
+    @if (item.Children != null && item.Children.Any())
+    {
+        <a href="@item.Url" class="utility-link utility-link--dropdown"
+           @(item.OpenInNewTab ? Html.Raw("target=\"_blank\" rel=\"noopener\"") : Html.Raw(""))>
+            @item.Title
+        </a>
+    }
+    else
+    {
+        <a href="@item.Url" class="utility-link"
+           @(item.OpenInNewTab ? Html.Raw("target=\"_blank\" rel=\"noopener\"") : Html.Raw(""))>
+            @item.Title
+        </a>
+    }
+}

@@ -1,0 +1,33 @@
+@{
+    ViewData["Title"] = "404 — Không tìm thấy trang";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@* Trang 404 — style giống trang chủ (ac-hero, ac-btn) *@
+<main id="main-content" class="public-page">
+    <section class="ac-hero" aria-label="Trang không tồn tại">
+        <div class="hd-container ac-hero__inner">
+            <div class="ac-hero__left">
+                <h1 class="ac-hero__tagline" style="margin-bottom: var(--spacing-4);">
+                    404
+                </h1>
+                <p class="ac-hero__sub" style="margin-bottom: var(--spacing-6); max-width: 32ch;">
+                    Trang bạn tìm kiếm không tồn tại hoặc đã được di chuyển.
+                </p>
+                <a asp-controller="Home" asp-action="Index" class="ac-btn ac-btn--white">
+                    Về trang chủ
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </a>
+            </div>
+            <div class="ac-hero__right" aria-hidden="true">
+                <div class="ac-hero__deco-circle ac-hero__deco-circle--1"></div>
+                <div class="ac-hero__deco-circle ac-hero__deco-circle--2"></div>
+            </div>
+        </div>
+        <div class="ac-wave" aria-hidden="true">
+            <svg viewBox="0 0 1440 100" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+                <path fill="#ffffff" d="M0,60 C240,110 480,10 720,60 C960,110 1200,20 1440,60 L1440,100 L0,100 Z"/>
+            </svg>
+        </div>
+    </section>
+</main>

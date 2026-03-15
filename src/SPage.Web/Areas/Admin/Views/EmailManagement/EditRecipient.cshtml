@@ -1,0 +1,47 @@
+@model SPage.Areas.Admin.Controllers.RecipientEmailModel
+@{
+    ViewData["Title"] = "Sửa email nhận";
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="mb-5">
+    <a asp-action="Index" class="text-sm text-slate-500 hover:text-slate-700">← Quản lý Email</a>
+</div>
+
+<div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 max-w-xl">
+    <h1 class="text-xl font-bold text-slate-800 mb-4">Sửa email nhận</h1>
+
+    <form asp-action="EditRecipient" asp-route-id="@Model.Id" method="post" class="space-y-4">
+        @Html.AntiForgeryToken()
+        <div asp-validation-summary="All" class="text-sm text-red-600 mb-4"></div>
+
+        <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">Email <span class="text-red-500">*</span></label>
+            <input asp-for="Email" type="email" class="block w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="email@example.com" />
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">Tên hiển thị</label>
+            <input asp-for="DisplayName" type="text" class="block w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">Nhóm (tùy chọn)</label>
+            <input asp-for="GroupKey" type="text" class="block w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Thứ tự</label>
+                <input asp-for="SortOrder" type="number" class="block w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+            </div>
+            <div class="flex items-end">
+                <label class="inline-flex items-center gap-2 cursor-pointer">
+                    <input asp-for="IsActive" type="checkbox" class="rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+                    <span class="text-sm text-slate-700">Bật (nhận thư)</span>
+                </label>
+            </div>
+        </div>
+        <div class="flex gap-2 pt-2">
+            <button type="submit" class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-colors">Lưu</button>
+            <a asp-action="Index" class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-slate-600 bg-slate-100 rounded-xl hover:bg-slate-200 transition-colors">Hủy</a>
+        </div>
+    </form>
+</div>

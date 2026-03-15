@@ -1,0 +1,20 @@
+@model SPage.Domain.Entities.Seo.SiteSettings
+
+@* Google Analytics GA4 *@
+@if (!string.IsNullOrWhiteSpace(Model.GoogleAnalyticsId))
+{
+    <script async src="https://www.googletagmanager.com/gtag/js?id=@Model.GoogleAnalyticsId"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+        gtag('config', '@Model.GoogleAnalyticsId');
+    </script>
+}
+
+@* Custom head HTML *@
+@if (!string.IsNullOrWhiteSpace(Model.CustomHeadHtml))
+{
+    @Html.Raw(Model.CustomHeadHtml)
+}
+

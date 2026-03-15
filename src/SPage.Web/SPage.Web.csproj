@@ -1,0 +1,59 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>SPage</RootNamespace>
+    <GenerateResourceUsePreferredUILang>true</GenerateResourceUsePreferredUILang>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SPage.Application\SPage.Application.csproj" />
+    <ProjectReference Include="..\SPage.Infrastructure\SPage.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MediatR" Version="12.4.1" />
+    <PackageReference Include="Microsoft.AspNetCore.Localization" Version="2.2.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.13">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.13">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.Extensions.Localization" Version="8.0.13" />
+  </ItemGroup>
+
+
+  <!-- Auto-bundle CSS & JS after build -->
+  <Target Name="BundleCss" AfterTargets="Build">
+    <ItemGroup>
+      <CssInputFiles Include="$(MSBuildProjectDirectory)\wwwroot\css\variables.css" />
+      <CssInputFiles Include="$(MSBuildProjectDirectory)\wwwroot\css\layout.css" />
+      <CssInputFiles Include="$(MSBuildProjectDirectory)\wwwroot\css\components.css" />
+      <CssInputFiles Include="$(MSBuildProjectDirectory)\wwwroot\css\utilities.css" />
+      <CssInputFiles Include="$(MSBuildProjectDirectory)\wwwroot\css\pages.css" />
+      <CssInputFiles Include="$(MSBuildProjectDirectory)\wwwroot\css\site.css" />
+      <JsInputFiles Include="$(MSBuildProjectDirectory)\wwwroot\js\app.js" />
+    </ItemGroup>
+    <ReadLinesFromFile File="%(CssInputFiles.Identity)">
+      <Output TaskParameter="Lines" ItemName="CssLines" />
+    </ReadLinesFromFile>
+    <WriteLinesToFile File="$(MSBuildProjectDirectory)\wwwroot\css\site.min.css"
+                      Lines="@(CssLines)"
+                      Overwrite="true"
+                      Encoding="UTF-8" />
+    <ReadLinesFromFile File="%(JsInputFiles.Identity)">
+      <Output TaskParameter="Lines" ItemName="JsLines" />
+    </ReadLinesFromFile>
+    <WriteLinesToFile File="$(MSBuildProjectDirectory)\wwwroot\js\site.min.js"
+                      Lines="@(JsLines)"
+                      Overwrite="true"
+                      Encoding="UTF-8" />
+    <Message Text="✓ CSS/JS bundles generated" Importance="high" />
+  </Target>
+
+</Project>

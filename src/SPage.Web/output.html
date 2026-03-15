@@ -1,0 +1,57 @@
+﻿<!DOCTYPE html>
+<html lang="vi" class="dark">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>&#x110;&#x103;ng nh&#x1EAD;p Admin — SPage</title>
+    <meta name="robots" content="noindex, nofollow" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: { extend: { colors: { primary: { 600: '#2563eb', 700: '#1d4ed8' } } } }
+        }
+    </script>
+</head>
+<body class="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900">
+
+    <div class="w-full max-w-sm p-6 bg-white rounded-2xl shadow-lg dark:bg-gray-800">
+        <div class="text-center mb-6">
+            <h1 class="text-2xl font-bold text-gray-800 dark:text-white">
+                SPage <span class="text-primary-600">Admin</span>
+            </h1>
+            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Đăng nhập để quản trị</p>
+        </div>
+
+        <form method="post" action="/account">
+            
+
+            
+
+            <div class="mb-4">
+                <label class="block mb-1.5 text-sm font-medium text-gray-700 dark:text-white" for="Email">Email</label>
+                <input type="email" autocomplete="email" autofocus class="block w-full px-3 py-2.5 text-sm bg-gray-50 border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-primary-600 focus:border-primary-600" data-val="true" data-val-email="The Email field is not a valid e-mail address." data-val-required="Vui l&#xF2;ng nh&#x1EAD;p email." id="Email" name="Email" value="" />
+                <span class="text-xs text-red-500 mt-1 field-validation-valid" data-valmsg-for="Email" data-valmsg-replace="true"></span>
+            </div>
+
+            <div class="mb-4">
+                <label class="block mb-1.5 text-sm font-medium text-gray-700 dark:text-white" for="Password">Mật khẩu</label>
+                <input type="password" autocomplete="current-password" class="block w-full px-3 py-2.5 text-sm bg-gray-50 border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-primary-600 focus:border-primary-600" data-val="true" data-val-required="Vui l&#xF2;ng nh&#x1EAD;p m&#x1EAD;t kh&#x1EA9;u." id="Password" name="Password" />
+                <span class="text-xs text-red-500 mt-1 field-validation-valid" data-valmsg-for="Password" data-valmsg-replace="true"></span>
+            </div>
+
+            <div class="flex items-center mb-5">
+                <input type="checkbox" class="w-4 h-4 text-primary-600 bg-gray-100 border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600" data-val="true" data-val-required="The RememberMe field is required." id="RememberMe" name="RememberMe" value="true" />
+                <label class="ms-2 text-sm text-gray-600 dark:text-gray-400" for="RememberMe">Ghi nhớ đăng nhập</label>
+            </div>
+
+            <button type="submit"
+                    class="w-full py-2.5 text-sm font-semibold text-white bg-primary-600 rounded-lg hover:bg-primary-700 focus:ring-4 focus:ring-primary-300 dark:focus:ring-primary-800">
+                Đăng nhập
+            </button>
+        <input name="__RequestVerificationToken" type="hidden" value="CfDJ8ESNEH34qGRBr5dXLUmUw32Jh8wc3mVNBf_cycdTRmaMmNazMkzsYzrXXXcpnjz26DsKXUMnxPGLd_EPyweX_A0d69e768WNco_3U2Vo2J-MoqyOJran42L1YOPJv1gojvJdPEZjsd9yZK5f6hqk56E" /><input name="RememberMe" type="hidden" value="false" /></form>
+    </div>
+
+</body>
+</html>
+

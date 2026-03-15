@@ -1,0 +1,67 @@
+# Build results
+bin/
+obj/
+/out/
+/publish/
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Rider / JetBrains
+.idea/
+*.sln.iml
+
+# NuGet
+packages/
+*.nupkg
+*.snupkg
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# Logs
+*.log
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Transient files
+*.tmp
+*.temp
+*.bak
+*.old
+
+# Resharper
+_ReSharper*/
+*.[Rr]e[Ss]harper
+
+# Coverage / Test
+TestResults/
+*.coverage
+*.coveragexml
+.nyc_output/
+coverage/
+
+# Publish profiles (optional – bỏ comment nếu không muốn commit)
+#Properties/PublishProfiles/
+
+# Docker
+*.pid
+
+# Node / frontend (nếu có)
+node_modules/
+dist/
+build/
+
+# Environment / secrets
+*.env
+*.env.*
+

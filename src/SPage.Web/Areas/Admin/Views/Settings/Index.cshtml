@@ -1,0 +1,88 @@
+@model SPage.Domain.Entities.Seo.SiteSettings
+@{
+ ViewData["Title"] = "Cấu hình website";
+}
+
+<div class="mb-5">
+ <h1 class="text-xl font-bold text-slate-800">Cấu hình website</h1>
+ <p class="text-sm text-slate-500 mt-0.5">Thông tin chung, liên hệ, SEO và mã tùy chỉnh.</p>
+</div>
+
+<div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 max-w-3xl">
+<form asp-action="Index" method="post" class="space-y-6">
+ @Html.AntiForgeryToken()
+
+ <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+ <div>
+ <label asp-for="SiteName" class="block mb-1.5 text-[13px] font-medium text-slate-600">Tên website</label>
+ <input asp-for="SiteName" class="block w-full px-3 py-2.5 text-sm bg-white border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" />
+ </div>
+ <div>
+ <label asp-for="SiteTagline" class="block mb-1.5 text-[13px] font-medium text-slate-600">Mô tả ngắn (tagline)</label>
+ <input asp-for="SiteTagline" class="block w-full px-3 py-2.5 text-sm bg-white border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" />
+ </div>
+ </div>
+
+ <div>
+ <label asp-for="DefaultMetaDescription" class="block mb-1.5 text-[13px] font-medium text-slate-600">Mô tả SEO mặc định (meta description)</label>
+ <textarea asp-for="DefaultMetaDescription" rows="2" class="block w-full px-3 py-2.5 text-sm bg-white border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"></textarea>
+ <p class="text-xs text-slate-500 mt-1">Dùng khi trang/bài viết không có mô tả riêng.</p>
+ </div>
+
+ <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+ <div>
+ <label asp-for="PhoneNumber" class="block mb-1.5 text-[13px] font-medium text-slate-600">Số điện thoại</label>
+ <input asp-for="PhoneNumber" class="block w-full px-3 py-2.5 text-sm bg-white border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" />
+ </div>
+ <div>
+ <label asp-for="Email" class="block mb-1.5 text-[13px] font-medium text-slate-600">Email</label>
+ <input asp-for="Email" class="block w-full px-3 py-2.5 text-sm bg-white border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" />
+ </div>
+ <div>
+ <label asp-for="ContactEmail" class="block mb-1.5 text-[13px] font-medium text-slate-600">Email nhận liên hệ</label>
+ <input asp-for="ContactEmail" class="block w-full px-3 py-2.5 text-sm bg-white border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" />
+ <p class="text-xs text-slate-500 mt-1">Nếu để trống sẽ dùng Email ở trên.</p>
+ </div>
+ <div>
+ <label asp-for="FacebookPageUrl" class="block mb-1.5 text-[13px] font-medium text-slate-600">Facebook Page</label>
+ <input asp-for="FacebookPageUrl" class="block w-full px-3 py-2.5 text-sm bg-white border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" />
+ </div>
+ </div>
+
+ <div>
+ <label asp-for="Address" class="block mb-1.5 text-[13px] font-medium text-slate-600">Địa chỉ</label>
+ <textarea asp-for="Address" rows="2" class="block w-full px-3 py-2.5 text-sm bg-white border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"></textarea>
+ </div>
+
+ <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+ <div>
+ <label asp-for="GoogleAnalyticsId" class="block mb-1.5 text-[13px] font-medium text-slate-600">Google Analytics Measurement ID</label>
+ <input asp-for="GoogleAnalyticsId" placeholder="G-XXXXXXXXXX" class="block w-full px-3 py-2.5 text-sm bg-white border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" />
+ <p class="text-xs text-slate-500 mt-1">Nếu nhập, mã GA4 gtag sẽ được chèn tự động vào &lt;head&gt;.</p>
+ </div>
+ </div>
+
+ <div>
+ <label asp-for="CustomHeadHtml" class="block mb-1.5 text-[13px] font-medium text-slate-600">Mã HTML trong &lt;head&gt;</label>
+ <textarea asp-for="CustomHeadHtml" rows="4" class="font-mono text-xs block w-full px-3 py-2.5 bg-slate-900 text-slate-100 border border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"></textarea>
+ <p class="text-xs text-slate-500 mt-1">Dùng cho verify domain, pixel, meta tag bổ sung...</p>
+ </div>
+
+ <div>
+ <label asp-for="CustomFooterHtml" class="block mb-1.5 text-[13px] font-medium text-slate-600">Mã HTML ở cuối &lt;body&gt;</label>
+ <textarea asp-for="CustomFooterHtml" rows="4" class="font-mono text-xs block w-full px-3 py-2.5 bg-slate-900 text-slate-100 border border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"></textarea>
+ <p class="text-xs text-slate-500 mt-1">Dùng cho script tracking, chat widget, v.v.</p>
+ </div>
+
+ <div class="flex items-center gap-3 pt-2">
+ <button type="submit" class="px-4 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-colors shadow-sm">
+ Lưu cấu hình
+ </button>
+ </div>
+</form>
+</div>
+
+@section Scripts {
+ <partial name="_ValidationScriptsPartial" />
+}
+

@@ -1,0 +1,600 @@
+@using SPage.Application.Common.Interfaces
+@using SPage.Application.Features.Products.DTOs
+@using SPage.Application.Features.Posts.DTOs
+@inject ISiteSettingsService SiteSettingsService
+@{
+    ViewData["Title"] = "Trang chủ";
+    var settings = await SiteSettingsService.GetAsync();
+    var featuredProducts = ViewBag.FeaturedProducts as IList<ProductSummaryDto> ?? new List<ProductSummaryDto>();
+    var recentPosts = ViewBag.RecentPosts as IList<PostSummaryDto> ?? new List<PostSummaryDto>();
+}
+
+@* ══════════════════════════════════════════════════════════
+   1. HERO — vàng đồng, wave bottom
+══════════════════════════════════════════════════════════ *@
+<section class="ac-hero" aria-label="Banner trang chủ">
+    <div class="hd-container ac-hero__inner">
+        <div class="ac-hero__left">
+            <div class="ac-hero__badge">
+                <img src="~/logo/logo-40-nam.png" alt="Tân Huê Viên 40 năm" class="ac-hero__badge-logo" />
+            </div>
+            <h1 class="ac-hero__tagline">
+                Đặc Sản <em>Sóc Trăng</em>
+            </h1>
+            <div class="ac-hero__sub-wrap" style="display:block; min-height:30px; margin-bottom:var(--spacing-8)">
+                <p class="ac-hero__sub" style="margin:0">Bánh Pía · Lạp Xưởng · Kẹo — Thương hiệu tin cậy từ năm 1985</p>
+            </div>
+            <a href="/san-pham" class="ac-btn ac-btn--white">
+                Khám phá sản phẩm
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </a>
+        </div>
+        <div class="ac-hero__right" aria-hidden="true">
+            <div class="ac-hero__product ac-hero__product--main ac-hero__product--sway">
+                <img src="~/images/home/hero-banh-pia-kim-sa.png"
+                     alt="Bánh Pía Kim Sa Tân Huê Viên"
+                     class="ac-hero__product-img ac-hero__product-img--main" />
+            </div>
+            <div class="ac-hero__product ac-hero__product--sub ac-hero__product--sway-alt">
+                <img src="~/images/home/hero-lap-xuong.png"
+                     alt="Lạp Xưởng Tươi Tân Huê Viên"
+                     class="ac-hero__product-img ac-hero__product-img--sub" />
+            </div>
+            <div class="ac-hero__deco-circle ac-hero__deco-circle--1"></div>
+            <div class="ac-hero__deco-circle ac-hero__deco-circle--2"></div>
+        </div>
+    </div>
+    @* Wave bottom *@
+    <div class="ac-wave" aria-hidden="true">
+        <svg viewBox="0 0 1440 100" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+            <path fill="#ffffff" d="M0,60 C240,110 480,10 720,60 C960,110 1200,20 1440,60 L1440,100 L0,100 Z"/>
+        </svg>
+    </div>
+</section>
+
+@* ══════════════════════════════════════════════════════════
+   2. PROMO SLIDER — sản phẩm nổi bật (data từ DB)
+══════════════════════════════════════════════════════════ *@
+<section class="ac-section ac-promos" aria-label="Sản phẩm nổi bật">
+    <div class="hd-container">
+        <div class="ac-promos__grid">
+            @if (featuredProducts.Any())
+            {
+                var first = featuredProducts[0];
+                <a href="/@(first.CategorySlug ?? "san-pham")/@first.Slug" class="ac-promo-card ac-promo-card--lg" data-reveal>
+                    <div class="ac-promo-card__content">
+                        <img src="~/logo/logo.png" alt="Tân Huê Viên" class="ac-promo-card__brand-logo" />
+                        <p class="ac-promo-card__sub">Đặc sản Sóc Trăng</p>
+                        <h2 class="ac-promo-card__big">@first.Name</h2>
+                        <p class="ac-promo-card__desc">@(first.ShortDescription ?? "Sản phẩm chất lượng từ thương hiệu uy tín.")</p>
+                    </div>
+                    @if (!string.IsNullOrEmpty(first.PrimaryImageUrl))
+                    {
+                        <img src="@first.PrimaryImageUrl" alt="@(first.PrimaryImageAlt ?? first.Name)" class="ac-promo-card__img-lg" loading="lazy" />
+                    }
+                    else
+                    {
+                        <div class="ac-promo-card__img-lg" style="background:linear-gradient(135deg,#eec976,#9a7e2e);min-height:200px;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.8);font-size:3rem;">@first.Name.Substring(0, Math.Min(2, first.Name.Length))</div>
+                    }
+                </a>
+                var delay = 100;
+                @foreach (var p in featuredProducts.Skip(1).Take(3))
+                {
+                    var bg = (delay % 300 == 0) ? "linear-gradient(135deg,#ffebee,#ffcdd2)" : (delay % 200 == 0 ? "linear-gradient(135deg,#e8f5e9,#c8e6c9)" : "linear-gradient(135deg,#fff8e1,#ffe082)");
+                    <a href="/@(p.CategorySlug ?? "san-pham")/@p.Slug" class="ac-promo-card ac-promo-card--sm" data-reveal data-reveal-delay="@delay" style="background:@bg">
+                        <div class="ac-promo-card__top">
+                            @if (p.IsNew) { <p class="ac-promo-card__label">Mới</p> }
+                            else if (p.IsPromotion) { <p class="ac-promo-card__label">Khuyến mãi</p> }
+                            <h3 class="ac-promo-card__title">@p.Name</h3>
+                        </div>
+                        @if (!string.IsNullOrEmpty(p.PrimaryImageUrl))
+                        {
+                            <img src="@p.PrimaryImageUrl" alt="@(p.PrimaryImageAlt ?? p.Name)" class="ac-promo-card__img" loading="lazy" />
+                        }
+                        else
+                        {
+                            <div class="ac-promo-card__img" style="background:rgba(255,255,255,0.2);min-height:120px;display:flex;align-items:center;justify-content:center;color:rgba(0,0,0,0.4);font-weight:bold;">@p.Name.Substring(0, Math.Min(2, p.Name.Length))</div>
+                        }
+                    </a>
+                    delay += 100;
+                }
+            }
+            else
+            {
+                <a href="/san-pham" class="ac-promo-card ac-promo-card--lg" data-reveal>
+                    <div class="ac-promo-card__content">
+                        <img src="~/logo/logo.png" alt="Tân Huê Viên" class="ac-promo-card__brand-logo" />
+                        <p class="ac-promo-card__sub">Đặc sản Sóc Trăng</p>
+                        <h2 class="ac-promo-card__big">Sản phẩm</h2>
+                        <p class="ac-promo-card__desc">Khám phá các sản phẩm đặc sản của chúng tôi.</p>
+                    </div>
+                    <div class="ac-promo-card__img-lg" style="background:linear-gradient(135deg,#eec976,#9a7e2e);min-height:200px;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.8);">SP</div>
+                </a>
+            }
+        </div>
+    </div>
+</section>
+
+@* ══════════════════════════════════════════════════════════
+   3. ABOUT — vàng đồng, text trắng bold + stats
+══════════════════════════════════════════════════════════ *@
+<section class="ac-about" aria-labelledby="about-title">
+    @* Top wave (white → gold) *@
+    <div class="ac-wave ac-wave--top" aria-hidden="true">
+        <svg viewBox="0 0 1440 80" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+            <path fill="#eec976" d="M0,40 C360,-10 1080,80 1440,30 L1440,0 L0,0 Z"/>
+        </svg>
+    </div>
+
+    <div class="hd-container ac-about__inner">
+        <div class="ac-about__left" data-reveal-x style="--reveal-x:-40px">
+            <h2 class="ac-about__title" id="about-title">
+                THƯƠNG HIỆU<br/>
+                ĐẶC SẢN<br/>
+                SÓC TRĂNG
+            </h2>
+            <p class="ac-about__desc">
+                Công ty Tân Huê Viên được thành lập từ năm 1985, chuyên sản xuất và kinh doanh các loại bánh kẹo Đặc sản Sóc Trăng. Là một trong những doanh nghiệp đi đầu trong việc bảo tồn truyền thống và không ngừng cải tiến máy móc công nghệ hiện đại, nhằm đưa thương hiệu Tân Huê Viên vươn xa vạn lý.
+            </p>
+            <a href="/about" class="ac-btn ac-btn--white-outline">
+                Xem thêm
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </a>
+        </div>
+        <div class="ac-about__right">
+            <div class="ac-stats-grid">
+                <div class="ac-stats-photo ac-stats-photo--1">
+                    <div class="ac-photo-mock" style="background:linear-gradient(135deg,#c9a23e,#9a7e2e)">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                        <span>Nhà máy<br/>hiện đại</span>
+                    </div>
+                    <div class="ac-stat-badge">
+                        <strong>1985</strong>
+                        <span>NĂM THÀNH LẬP
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                        </span>
+                    </div>
+                </div>
+                <div class="ac-stat-big" data-reveal data-reveal-delay="0">
+                    <strong data-count="40" data-suffix="+">40+</strong>
+                    <span>NĂM KINH NGHIỆM
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg>
+                    </span>
+                </div>
+                <div class="ac-stat-big" data-reveal data-reveal-delay="100">
+                    <strong data-count="20" data-suffix="+">20+</strong>
+                    <span>QUỐC GIA XUẤT KHẨU
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    </span>
+                </div>
+                <div class="ac-stats-photo ac-stats-photo--2">
+                    <div class="ac-photo-mock" style="background:linear-gradient(135deg,#6d4c0f,#c9a23e)">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                        <span>Đội ngũ<br/>chuyên nghiệp</span>
+                    </div>
+                    <div class="ac-stat-badge ac-stat-badge--bottom">
+                        <strong>63</strong>
+                        <span>TỈNH THÀNH</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* Bottom wave (gold → white) *@
+    <div class="ac-wave ac-wave--bottom" aria-hidden="true">
+        <svg viewBox="0 0 1440 100" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+            <path fill="#ffffff" d="M0,60 C240,110 480,10 720,60 C960,110 1200,20 1440,60 L1440,100 L0,100 Z"/>
+        </svg>
+    </div>
+</section>
+
+@* ══════════════════════════════════════════════════════════
+   4. GIỚI THIỆU CÔNG TY — trắng
+══════════════════════════════════════════════════════════ *@
+<section class="ac-section ac-ceo">
+    <div class="hd-container ac-ceo__inner">
+        <div class="ac-ceo__text" data-reveal>
+            <p class="ac-ceo__body">
+                Tân Huê Viên tự hào là doanh nghiệp tiên phong trong việc bảo tồn và phát triển hương vị bánh pía truyền thống Sóc Trăng. Qua hơn 40 năm hình thành, chúng tôi đã không ngừng đổi mới — từ công thức đến dây chuyền sản xuất — để mang đến những sản phẩm đảm bảo chất lượng, an toàn vệ sinh thực phẩm và phong phú hương vị.
+            </p>
+            <p class="ac-ceo__body">
+                Với hệ thống phân phối trải rộng khắp 63 tỉnh thành và xuất khẩu sang hơn 20 quốc gia, chúng tôi hướng đến mục tiêu đưa đặc sản Sóc Trăng vươn ra thế giới, góp phần giới thiệu văn hóa ẩm thực Việt Nam đến bạn bè quốc tế.
+            </p>
+            <p class="ac-ceo__sign">
+                <strong>Công ty TNHH Tân Huê Viên — Từ năm 1985</strong>
+            </p>
+        </div>
+        <div class="ac-ceo__photo" aria-hidden="true" data-reveal-x style="--reveal-x:40px">
+            <div class="ac-photo-mock ac-photo-mock--ceo" style="background:linear-gradient(160deg,#fff8e1,#ffe082)">
+                <img src="~/logo/logo-40-nam.png" alt="Tân Huê Viên 40 năm" style="width:100%;height:100%;object-fit:contain;border-radius:inherit" />
+            </div>
+        </div>
+    </div>
+</section>
+
+@* ══════════════════════════════════════════════════════════
+   5. DANH MỤC SẢN PHẨM — 3 tabs
+══════════════════════════════════════════════════════════ *@
+<section class="ac-section ac-happiness" aria-labelledby="happiness-title" data-tabs>
+    <div class="hd-container">
+        <h2 class="ac-section-title ac-section-title--red" id="happiness-title" data-reveal>DÒNG SẢN PHẨM</h2>
+        <div class="ac-tabs" data-tab-group="happiness" data-reveal data-reveal-delay="150">
+            <button class="ac-tab active" data-tab="consumers">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><path d="M9 9h.01M15 9h.01"/></svg>
+                BÁNH PÍA
+            </button>
+            <button class="ac-tab" data-tab="society">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l19-9-9 19-2-8-8-2z"/></svg>
+                LẠP XƯỞNG
+            </button>
+            <button class="ac-tab" data-tab="employees">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                KẸO - CỐM
+            </button>
+        </div>
+        <div class="ac-tab-panels" data-reveal data-reveal-delay="250">
+            <div class="ac-tab-panel active" data-tab-panel="consumers">
+                <div class="ac-happiness-grid">
+                    <div class="ac-happiness-photo" style="background:linear-gradient(135deg,#fff8e1,#ffe082)">
+                        <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#eec976" stroke-width="1" opacity=".7"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><path d="M9 9h.01M15 9h.01"/></svg>
+                        <span>Bánh Pía Kim Sa<br/>Đậu Đen, Mè Đen, Trà Xanh</span>
+                    </div>
+                    <div class="ac-happiness-photo" style="background:linear-gradient(135deg,#fce4ec,#f8bbd9)">
+                        <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#880e4f" stroke-width="1" opacity=".7"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+                        <span>Bánh Pía Chay<br/>Đậu Xanh, Dứa, Đậu Đen</span>
+                    </div>
+                    <div class="ac-happiness-photo" style="background:linear-gradient(135deg,#e8eaf6,#9fa8da)">
+                        <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#283593" stroke-width="1" opacity=".7"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                        <span>Bánh Pía Mới 2024<br/>Kim Sa Môn, Sầu Riêng Môn</span>
+                    </div>
+                </div>
+            </div>
+            <div class="ac-tab-panel" data-tab-panel="society">
+                <div class="ac-happiness-grid">
+                    <div class="ac-happiness-photo" style="background:linear-gradient(135deg,#fce4ec,#ef9a9a)">
+                        <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#b71c1c" stroke-width="1" opacity=".7"><path d="M3 11l19-9-9 19-2-8-8-2z"/></svg>
+                        <span>Lạp Xưởng Hồ Lô<br/>Vị truyền thống</span>
+                    </div>
+                    <div class="ac-happiness-photo" style="background:linear-gradient(135deg,#fff3e0,#ffcc80)">
+                        <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#e65100" stroke-width="1" opacity=".7"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/></svg>
+                        <span>Lạp Xưởng Ăn Liền<br/>Tiện lợi mọi lúc</span>
+                    </div>
+                    <div class="ac-happiness-photo" style="background:linear-gradient(135deg,#f3e5f5,#ce93d8)">
+                        <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#6a1b9a" stroke-width="1" opacity=".7"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                        <span>Lạp Xưởng Mai Quế Lộ<br/>Vị Tiêu 3 Sao</span>
+                    </div>
+                </div>
+            </div>
+            <div class="ac-tab-panel" data-tab-panel="employees">
+                <div class="ac-happiness-grid">
+                    <div class="ac-happiness-photo" style="background:linear-gradient(135deg,#fff8e1,#ffe082)">
+                        <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#f9a825" stroke-width="1" opacity=".7"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                        <span>Kẹo Đậu Phộng Ép<br/>Kẹo Bách Hạt, Thập Cẩm</span>
+                    </div>
+                    <div class="ac-happiness-photo" style="background:linear-gradient(135deg,#e8f5e3,#a5d6a7)">
+                        <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#2e7d32" stroke-width="1" opacity=".7"><path d="M17 8C8 10 5.9 16.17 3.82 21.34L5.71 22l1-2.3A4.49 4.49 0 0 0 8 20C19 20 22 3 22 3c-1 2-8 2-8 2s2-1 2-4c-4 0-7 4-7 4s2-2 1 6c-4-2-3-7-3-7z"/></svg>
+                        <span>Cốm Gạo Lức Táo Đỏ<br/>Cốm Yến Mạch — Mới 2025</span>
+                    </div>
+                    <div class="ac-happiness-photo" style="background:linear-gradient(135deg,#e3f2fd,#90caf9)">
+                        <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#1565c0" stroke-width="1" opacity=".7"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+                        <span>Thanh Hạt<br/>Kẹo Gạo Lức Rong Biển</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@* ══════════════════════════════════════════════════════════
+   6. SẢN PHẨM NỔI BẬT — tab + product selector + detail (data from DB)
+══════════════════════════════════════════════════════════ *@
+@{
+    var productCategories = ViewBag.ProductCategories as IList<SPage.Application.Features.ProductCategories.DTOs.ProductCategoryDto> ?? new List<SPage.Application.Features.ProductCategories.DTOs.ProductCategoryDto>();
+    var productsSection6 = ViewBag.ProductsSection6 as IList<SPage.Application.Features.Products.DTOs.ProductSummaryDto> ?? new List<SPage.Application.Features.Products.DTOs.ProductSummaryDto>();
+    var firstProduct = productsSection6.FirstOrDefault();
+    var brandColors = new[] { "#eec976", "#37474f", "#2e7d32", "#f57f17", "#b71c1c", "#880e4f", "#6d4c41", "#558b2f", "#6a1b9a", "#1565c0", "#c62828", "#2e7d32" };
+}
+<section class="ac-section ac-products-section" aria-labelledby="products-title" data-tabs>
+    @* Wave top *@
+    <div class="ac-wave ac-wave--red-top" aria-hidden="true">
+        <svg viewBox="0 0 1440 80" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+            <path fill="#f5f5f5" d="M0,80 L0,40 C240,-10 480,80 720,40 C960,0 1200,70 1440,30 L1440,80 Z"/>
+        </svg>
+    </div>
+    <div class="ac-products-section__bg">
+        <div class="hd-container">
+            <h2 class="ac-section-title ac-section-title--red" id="products-title" data-reveal>SẢN PHẨM NỔI BẬT</h2>
+            @* Category tabs: TẤT CẢ + danh mục từ DB *@
+            <div class="ac-cat-tabs" data-tab-group="products">
+                <button class="ac-cat-tab active" data-tab="all">TẤT CẢ</button>
+                @foreach (var cat in productCategories)
+                {
+                    <button class="ac-cat-tab" data-tab="@(cat.Slug ?? "")">@(cat.Name?.ToUpperInvariant() ?? "")</button>
+                }
+            </div>
+
+            <div class="ac-products-browser" data-reveal data-reveal-delay="100">
+                @* Left: product selector (real products) *@
+                <div class="ac-brand-selector" id="productSelectorList">
+                    @for (var i = 0; i < productsSection6.Count; i++)
+                    {
+                        var p = productsSection6[i];
+                        var abbr = p.Name?.Length >= 2 ? string.Concat(p.Name.Take(2)).ToUpperInvariant() : (p.Name ?? "SP");
+                        var color = brandColors[i % brandColors.Length];
+                        var detailUrl = Url.Action("Detail", "Products", new { categorySlug = p.CategorySlug ?? "san-pham", productSlug = p.Slug });
+                        <button type="button" class="ac-brand-item @(i == 0 ? "active" : "")"
+                                data-category-slug="@(p.CategorySlug ?? "")"
+                                data-name="@p.Name"
+                                data-desc="@(p.ShortDescription ?? "")"
+                                data-url="@detailUrl"
+                                data-image="@(p.PrimaryImageUrl ?? "")"
+                                data-image-alt="@(p.PrimaryImageAlt ?? p.Name)"
+                                data-color="@color"
+                                data-abbr="@abbr">
+                            <div class="ac-brand-item__logo" style="background:@color; color:white">
+                                @if (!string.IsNullOrWhiteSpace(p.PrimaryImageUrl))
+                                {
+                                    <img src="@p.PrimaryImageUrl" alt="@(p.PrimaryImageAlt ?? p.Name)" width="48" height="48" loading="lazy" />
+                                }
+                                else
+                                {
+                                    <strong>@abbr</strong>
+                                }
+                            </div>
+                            <span>@p.Name</span>
+                        </button>
+                    }
+                </div>
+                @* Right: product detail *@
+                <div class="ac-product-detail" id="productDetail">
+                    <div class="ac-product-detail__hero" id="productDetailHero" style="background:linear-gradient(135deg,@(firstProduct != null ? brandColors[0] : "#eec976"),@(firstProduct != null ? brandColors[0] : "#9a7e2e")88)">
+                        <div id="prodDetailImg" class="ac-product-detail__mock">
+                            <img id="prodDetailImgEl" src="@(firstProduct?.PrimaryImageUrl ?? "")" alt="@(firstProduct?.PrimaryImageAlt ?? firstProduct?.Name)" style="@(string.IsNullOrWhiteSpace(firstProduct?.PrimaryImageUrl) ? "display:none" : "")" />
+                            <div class="ac-product-detail__mock-label" id="prodDetailAbbr" style="@(!string.IsNullOrWhiteSpace(firstProduct?.PrimaryImageUrl) ? "display:none" : "")">@(firstProduct != null && firstProduct.Name?.Length >= 2 ? string.Concat(firstProduct.Name.Take(2)).ToUpperInvariant() : "SP")</div>
+                        </div>
+                        <div class="ac-product-detail__info">
+                            <h3 id="prodDetailName" class="ac-product-detail__name">@(firstProduct?.Name ?? "Chọn sản phẩm")</h3>
+                            <p id="prodDetailDesc" class="ac-product-detail__desc">@(firstProduct?.ShortDescription ?? "")</p>
+                        </div>
+                        <a href="@(firstProduct != null ? Url.Action("Detail", "Products", new { categorySlug = firstProduct.CategorySlug ?? "san-pham", productSlug = firstProduct.Slug }) : "#")" class="ac-product-detail__link" id="prodDetailLink">
+                            Xem chi tiết
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    @* Wave bottom *@
+    <div class="ac-wave ac-wave--gray-bottom" aria-hidden="true">
+        <svg viewBox="0 0 1440 80" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+            <path fill="#ffffff" d="M0,30 C360,80 1080,0 1440,50 L1440,80 L0,80 Z"/>
+        </svg>
+    </div>
+</section>
+
+<script>
+(function() {
+    var tabGroup = document.querySelector('.ac-cat-tabs[data-tab-group="products"]');
+    var items = document.querySelectorAll('#productSelectorList .ac-brand-item');
+    var detailHero = document.getElementById('productDetailHero');
+    var detailName = document.getElementById('prodDetailName');
+    var detailDesc = document.getElementById('prodDetailDesc');
+    var detailLink = document.getElementById('prodDetailLink');
+    var detailImg = document.getElementById('prodDetailImg');
+    var detailImgEl = document.getElementById('prodDetailImgEl');
+    var detailAbbr = document.getElementById('prodDetailAbbr');
+
+    function filterByTab(tabSlug) {
+        var isAll = !tabSlug || tabSlug === 'all';
+        items.forEach(function(btn) {
+            var catSlug = (btn.getAttribute('data-category-slug') || '').toLowerCase();
+            var match = isAll || catSlug === tabSlug.toLowerCase();
+            btn.style.display = match ? '' : 'none';
+        });
+    }
+
+    if (tabGroup) {
+        tabGroup.addEventListener('click', function(e) {
+            var tab = e.target.closest('.ac-cat-tab');
+            if (!tab) return;
+            tabGroup.querySelectorAll('.ac-cat-tab').forEach(function(t){ t.classList.remove('active'); });
+            tab.classList.add('active');
+            filterByTab(tab.getAttribute('data-tab'));
+        });
+    }
+
+    items.forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            items.forEach(function(b){ b.classList.remove('active'); });
+            btn.classList.add('active');
+            var name = btn.getAttribute('data-name') || '';
+            var desc = btn.getAttribute('data-desc') || '';
+            var url = btn.getAttribute('data-url') || '#';
+            var image = btn.getAttribute('data-image') || '';
+            var imageAlt = btn.getAttribute('data-image-alt') || name;
+            var color = btn.getAttribute('data-color') || '#eec976';
+            var abbr = btn.getAttribute('data-abbr') || 'SP';
+            if (detailHero) detailHero.style.background = 'linear-gradient(135deg,' + color + ',' + color + '88)';
+            if (detailName) detailName.textContent = name;
+            if (detailDesc) detailDesc.textContent = desc;
+            if (detailLink) { detailLink.href = url; detailLink.style.display = url === '#' ? 'none' : ''; }
+            if (detailImg) {
+                if (image && detailImgEl) {
+                    detailImgEl.src = image;
+                    detailImgEl.alt = imageAlt;
+                    detailImgEl.style.display = '';
+                    if (detailAbbr) detailAbbr.style.display = 'none';
+                } else {
+                    if (detailImgEl) detailImgEl.style.display = 'none';
+                    if (detailAbbr) { detailAbbr.textContent = abbr; detailAbbr.style.display = ''; }
+                }
+            }
+        });
+    });
+})();
+</script>
+
+@* ══════════════════════════════════════════════════════════
+   7. QUY TRÌNH SẢN XUẤT — 5 bước
+══════════════════════════════════════════════════════════ *@
+<section class="ac-section ac-quality" aria-labelledby="quality-title">
+    <div class="hd-container ac-quality__inner">
+        <div class="ac-quality__text" data-reveal-x style="--reveal-x:-40px">
+            <div class="ac-eyebrow">Cam kết chất lượng</div>
+            <h2 class="ac-quality__title" id="quality-title">
+                QUY TRÌNH<br/>
+                SẢN XUẤT<br/>
+                5 BƯỚC
+            </h2>
+            <ol class="ac-quality__steps">
+                <li><span>①</span> Nguyên liệu đầu vào được tuyển chọn kỹ lưỡng</li>
+                <li><span>②</span> Dây chuyền làm bánh tự động, khép kín</li>
+                <li><span>③</span> Kiểm tra chất lượng nghiêm ngặt</li>
+                <li><span>④</span> Dây chuyền đóng gói đảm bảo vệ sinh</li>
+                <li><span>⑤</span> Xuất hàng & vận chuyển đến đại lý</li>
+            </ol>
+            <a href="/chat-luong" class="ac-btn ac-btn--red">
+                Xem chi tiết
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </a>
+        </div>
+        <div class="ac-quality__media" aria-hidden="true" data-reveal-x style="--reveal-x:40px">
+            <div class="ac-quality__video-mock">
+                <div class="ac-quality__video-inner" style="background:linear-gradient(135deg,#5d4037,#8d6e63)">
+                    <div class="ac-play-btn">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="white"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                    </div>
+                    <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="0.8"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+                    <span>Quy trình sản xuất Tân Huê Viên</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@* ══════════════════════════════════════════════════════════
+   8. PHÂN PHỐI & ĐẠI LÝ — xanh lá
+══════════════════════════════════════════════════════════ *@
+<section class="ac-sustain" aria-labelledby="sustain-title">
+    <div class="hd-container ac-sustain__inner">
+        <div class="ac-sustain__media" aria-hidden="true" data-reveal-x style="--reveal-x:-40px">
+            <div class="ac-sustain__photo-mock" style="background:linear-gradient(135deg,#1b5e20,#2e7d32)">
+                <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="0.8"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                <span>Xuất khẩu<br/>toàn cầu</span>
+            </div>
+            <div class="ac-sustain__photo-sm" style="background:linear-gradient(135deg,#eec976,#c9a23e)">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" stroke-width="1.2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                <span>Đại lý<br/>toàn quốc</span>
+            </div>
+        </div>
+        <div class="ac-sustain__content" data-reveal-x style="--reveal-x:40px">
+            <div class="ac-eyebrow ac-eyebrow--green">Phân phối rộng khắp</div>
+            <h2 class="ac-sustain__title" id="sustain-title">
+                MẠNG LƯỚI<br/>
+                PHÂN PHỐI<br/>
+                TOÀN CẦU
+            </h2>
+            <div class="ac-sustain__stats">
+                <div class="ac-sustain__stat" data-reveal data-reveal-delay="0">
+                    <strong data-count="63">63</strong>
+                    <span>Tỉnh thành phân phối trong nước</span>
+                </div>
+                <div class="ac-sustain__stat" data-reveal data-reveal-delay="100">
+                    <strong data-count="20" data-suffix="+">20+</strong>
+                    <span>Quốc gia nhận hàng xuất khẩu</span>
+                </div>
+                <div class="ac-sustain__stat" data-reveal data-reveal-delay="200">
+                    <strong data-count="40" data-suffix="+">40+</strong>
+                    <span>Năm kinh nghiệm & uy tín</span>
+                </div>
+            </div>
+            <a href="/dai-ly" class="ac-btn ac-btn--green">
+                Tìm đại lý
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </a>
+        </div>
+    </div>
+</section>
+
+@* ══════════════════════════════════════════════════════════
+   9. TIN TỨC SỰ KIỆN — featured + list (data từ DB)
+══════════════════════════════════════════════════════════ *@
+<section class="ac-section ac-news" aria-labelledby="news-title">
+    <div class="hd-container">
+        <h2 class="ac-section-title ac-section-title--red" id="news-title" data-reveal>TIN TỨC SỰ KIỆN</h2>
+        <div class="ac-news-grid">
+            @if (recentPosts.Any())
+            {
+                var featuredPost = recentPosts[0];
+                <article class="ac-news-featured" data-reveal-x style="--reveal-x:-40px">
+                    <a href="/@featuredPost.Slug" class="ac-news-featured__img-link" aria-label="Tin nổi bật">
+                        <div class="ac-news-featured__img" style="@(string.IsNullOrEmpty(featuredPost.FeaturedImageUrl) ? "background:linear-gradient(135deg,#c9a23e,#6d5a10)" : "background:transparent")">
+                            @if (!string.IsNullOrEmpty(featuredPost.FeaturedImageUrl))
+                            {
+                                <img src="@featuredPost.FeaturedImageUrl" alt="@(featuredPost.FeaturedImageAlt ?? featuredPost.Title)" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0" />
+                            }
+                            <div class="ac-news-featured__overlay">
+                                <span class="ac-news-cat ac-news-cat--green">@featuredPost.CategoryName</span>
+                                <h3 class="ac-news-featured__title">@featuredPost.Title</h3>
+                            </div>
+                        </div>
+                    </a>
+                    <div class="ac-news-featured__meta">
+                        <time datetime="@featuredPost.PublishedAt?.ToString("yyyy-MM-dd")">@(featuredPost.PublishedAt?.ToString("dd.MM.yyyy") ?? "")</time>
+                        <a href="/@featuredPost.Slug" class="ac-news-featured__read">Đọc tiếp →</a>
+                    </div>
+                </article>
+
+                <div class="ac-news-list">
+                    @foreach (var post in recentPosts.Skip(1))
+                    {
+                        var imgStyle = string.IsNullOrEmpty(post.FeaturedImageUrl) ? "linear-gradient(135deg,#c9a23e,#eec976)" : "transparent";
+                        <article class="ac-news-item" data-reveal>
+                            <a href="/@post.Slug" class="ac-news-item__img" style="background:@imgStyle;position:relative;overflow:hidden" aria-hidden="true">
+                                @if (!string.IsNullOrEmpty(post.FeaturedImageUrl))
+                                {
+                                    <img src="@post.FeaturedImageUrl" alt="@(post.FeaturedImageAlt ?? post.Title)" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0" />
+                                }
+                                else
+                                {
+                                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="1" style="position:relative;z-index:1"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                                }
+                            </a>
+                            <div class="ac-news-item__body">
+                                <div class="ac-news-item__meta">
+                                    <time>@(post.PublishedAt?.ToString("dd.MM.yyyy") ?? "")</time>
+                                    <span class="ac-news-cat ac-news-cat--green">@post.CategoryName</span>
+                                </div>
+                                <h3 class="ac-news-item__title">
+                                    <a href="/@post.Slug">@post.Title</a>
+                                </h3>
+                            </div>
+                        </article>
+                    }
+                    <a href="@Url.Action("Index", "Posts")" class="ac-news-all-link">Xem tất cả tin tức →</a>
+                </div>
+            }
+            else
+            {
+                <article class="ac-news-featured" data-reveal-x style="--reveal-x:-40px">
+                    <a href="@Url.Action("Index", "Posts")" class="ac-news-featured__img-link">
+                        <div class="ac-news-featured__img" style="background:linear-gradient(135deg,#c9a23e,#6d5a10)">
+                            <div class="ac-news-featured__overlay">
+                                <span class="ac-news-cat ac-news-cat--green">Tin tức</span>
+                                <h3 class="ac-news-featured__title">Tin tức &amp; sự kiện</h3>
+                            </div>
+                        </div>
+                    </a>
+                    <div class="ac-news-featured__meta">
+                        <a href="@Url.Action("Index", "Posts")" class="ac-news-featured__read">Xem tất cả →</a>
+                    </div>
+                </article>
+                <div class="ac-news-list">
+                    <a href="@Url.Action("Index", "Posts")" class="ac-news-all-link">Xem tất cả tin tức →</a>
+                </div>
+            }
+        </div>
+    </div>
+</section>

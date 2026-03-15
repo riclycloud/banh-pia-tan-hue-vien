@@ -1,0 +1,46 @@
+@model SPage.Domain.Entities.Content.Slider
+
+@if (Model is not null && Model.Slides.Any())
+{
+    <div id="slider-@Model.Id" class="carousel slide" data-bs-ride="carousel">
+        <div class="carousel-inner">
+            @{
+                var index = 0;
+            }
+            @foreach (var slide in Model.Slides.Where(s => s.IsActive).OrderBy(s => s.SortOrder))
+            {
+                var activeClass = index == 0 ? "active" : "";
+                <div class="carousel-item @activeClass">
+                    @if (!string.IsNullOrEmpty(slide.LinkUrl))
+                    {
+                        <a href="@slide.LinkUrl" @(slide.OpenInNewTab ? "target=\"_blank\"" : "")>
+                            <img src="@slide.ImageUrl" class="d-block w-100" alt="@slide.AltText" />
+                        </a>
+                    }
+                    else
+                    {
+                        <img src="@slide.ImageUrl" class="d-block w-100" alt="@slide.AltText" />
+                    }
+
+                    @if (!string.IsNullOrEmpty(slide.Caption))
+                    {
+                        <div class="carousel-caption d-none d-md-block">
+                            <p>@slide.Caption</p>
+                        </div>
+                    }
+                </div>
+                index++;
+            }
+        </div>
+
+        <button class="carousel-control-prev" type="button" data-bs-target="#slider-@Model.Id" data-bs-slide="prev">
+            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Previous</span>
+        </button>
+        <button class="carousel-control-next" type="button" data-bs-target="#slider-@Model.Id" data-bs-slide="next">
+            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Next</span>
+        </button>
+    </div>
+}
+

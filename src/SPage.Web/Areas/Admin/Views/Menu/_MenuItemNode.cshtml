@@ -1,0 +1,42 @@
+@using SPage.Domain.Entities.Navigation
+@model MenuItem
+
+<li class="flex items-start justify-between gap-2 px-2 py-1.5 bg-white border border-slate-200 rounded-xl cursor-move"
+    draggable="true"
+    data-id="@Model.Id">
+    <div class="flex items-start gap-2">
+        <span class="mt-0.5 inline-flex items-center justify-center w-4 h-4 text-[10px] rounded-full bg-slate-100 text-slate-500">::</span>
+        <div>
+            <div class="text-sm font-medium text-slate-800">
+                @Model.Title
+                @if (!Model.IsActive)
+                {
+                    <span class="ml-1 inline-flex items-center px-1.5 py-0.5 text-[10px] rounded-full bg-slate-100 text-slate-600">Ẩn</span>
+                }
+            </div>
+            <div class="text-[11px] text-slate-500 font-mono">@Model.Url</div>
+            <div class="mt-0.5 text-[11px] text-slate-400">
+                @(Model.Location?.Name ?? "?") • Sort: @Model.SortOrder
+            </div>
+        </div>
+    </div>
+    <div class="flex items-center gap-2">
+        <a asp-action="Edit" asp-route-id="@Model.Id"
+           class="text-[11px] text-blue-600 hover:underline">Sửa</a>
+        <form asp-action="Delete" asp-route-id="@Model.Id" method="post" class="inline"
+              onsubmit="return confirm('Xóa menu này (bao gồm cả menu con)?');">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="text-[11px] text-red-600 hover:underline">Xóa</button>
+        </form>
+    </div>
+
+    @if (Model.Children != null && Model.Children.Any())
+    {
+        <ul class="ml-4 border-l border-dashed border-slate-200 pl-3 mt-1 space-y-1">
+            @foreach (var child in Model.Children.OrderBy(c => c.SortOrder))
+            {
+                <partial name="_MenuItemNode" model="child" />
+            }
+        </ul>
+    }
+</li>

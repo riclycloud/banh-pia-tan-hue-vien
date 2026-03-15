@@ -1,0 +1,1431 @@
+@model SPage.Areas.Admin.Controllers.PageFormModel
+@using SPage.Domain.Enums
+@{
+    ViewData["Title"] = "Sửa trang";
+}
+
+@* ── Editor CSS (CodeMirror + Quill) — loaded in body, applied before scripts ── *@
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.17/codemirror.min.css">
+<link rel="stylesheet" href="https://cdn.quilljs.com/1.3.7/quill.snow.css">
+<style>
+    /* CodeMirror tweaks */
+    .CodeMirror { height: 240px; font-size: 12.5px; border: 1px solid #e2e8f0; border-radius: 0.5rem; }
+    .CodeMirror-scroll { padding: 4px 0; }
+
+    /* Quill tweaks */
+    .ql-container.ql-snow { border-radius: 0 0 0.5rem 0.5rem; font-size: 14px; min-height: 150px; }
+    .ql-toolbar.ql-snow  { border-radius: 0.5rem 0.5rem 0 0; border-color: #e2e8f0; background: #f8fafc; }
+    .ql-container.ql-snow { border-color: #e2e8f0; }
+    .ql-editor { min-height: 150px; }
+
+    /* Section type badge colors */
+    .sec-badge-code  { background: #1e293b; color: #7dd3fc; }
+    .sec-badge-rich  { background: #14532d; color: #86efac; }
+    .sec-badge-block { background: #1e3a5f; color: #93c5fd; }
+
+    /* Style panel alignment buttons */
+    .align-btn         { padding: 2px 8px; font-size: 11px; border: 1px solid #e2e8f0; border-radius: 6px; background: white; cursor: pointer; color: #64748b; transition: all .15s; }
+    .align-btn.active  { background: #3b82f6; color: white; border-color: #3b82f6; }
+    .align-btn:hover:not(.active) { background: #f1f5f9; }
+
+    /* Upload button */
+    .btn-upload { padding: 3px 8px; font-size: 11px; border: 1px solid #bfdbfe; border-radius: 6px; background: white; color: #2563eb; cursor: pointer; white-space: nowrap; transition: background .15s; }
+    .btn-upload:hover { background: #eff6ff; }
+    .btn-browse { padding: 3px 8px; font-size: 11px; border: 1px solid #c4b5fd; border-radius: 6px; background: white; color: #7c3aed; cursor: pointer; white-space: nowrap; transition: background .15s; }
+    .btn-browse:hover { background: #f5f3ff; }
+    /* Image picker modal */
+    #img-picker-modal { display:none; position:fixed; inset:0; z-index:999; background:rgba(0,0,0,.5); align-items:center; justify-content:center; }
+    #img-picker-modal.open { display:flex; }
+    #img-picker-inner { background:#fff; border-radius:1rem; width:min(880px,96vw); max-height:85vh; display:flex; flex-direction:column; overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,.3); }
+    #img-picker-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:10px; overflow-y:auto; padding:12px; flex:1; }
+    .picker-item { position:relative; cursor:pointer; border-radius:8px; overflow:hidden; aspect-ratio:1/1; border:2px solid transparent; transition:border-color .15s,transform .15s; }
+    .picker-item:hover { border-color:#3b82f6; transform:scale(1.03); }
+    .picker-item img { width:100%; height:100%; object-fit:cover; display:block; }
+    .picker-item .picker-name { position:absolute; bottom:0; left:0; right:0; background:rgba(0,0,0,.6); color:#fff; font-size:9px; padding:2px 4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+</style>
+
+@* ── Breadcrumb + nút về danh sách (trong Admin) ── *@
+<div class="flex flex-wrap items-center justify-between gap-3 mb-5">
+    <div class="flex items-center gap-2 text-sm">
+        <a asp-area="Admin" asp-controller="Pages" asp-action="Index" class="text-slate-400 hover:text-blue-600 transition-colors">Trang động</a>
+        <svg class="w-3.5 h-3.5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m9 18 6-6-6-6"/>
+        </svg>
+        <span class="text-slate-600 font-medium">@Model.Title</span>
+    </div>
+    <a asp-area="Admin" asp-controller="Pages" asp-action="Index" class="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-slate-600 bg-slate-100 rounded-xl hover:bg-slate-200 transition-colors">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+        Về danh sách trang
+    </a>
+</div>
+
+@if (TempData["Success"] is string msg)
+{
+    <div class="mb-4 px-4 py-3 bg-green-50 border border-green-200 text-green-700 text-sm rounded-xl">@msg</div>
+}
+
+<form asp-action="Edit" asp-route-id="@Model.Id" method="post" id="page-form">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Id" />
+
+    <div class="grid grid-cols-1 gap-5 lg:grid-cols-3">
+
+        @* ── Main column ── *@
+        <div class="lg:col-span-2 space-y-4">
+
+            @* Title + Slug *@
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-4">
+                <div>
+                    <label asp-for="Title" class="block mb-1.5 text-[13px] font-medium text-slate-600">
+                        Tiêu đề <span class="text-red-500">*</span>
+                    </label>
+                    <input asp-for="Title" id="page-title" placeholder="Nhập tiêu đề trang..."
+                           class="block w-full px-3 py-2.5 text-sm bg-white border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" />
+                    <span asp-validation-for="Title" class="text-xs text-red-500 mt-1 block"></span>
+                </div>
+                <div>
+                    <label asp-for="Slug" class="block mb-1.5 text-[13px] font-medium text-slate-600">Slug (URL)</label>
+                    <div class="flex rounded-xl overflow-hidden border border-slate-200 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 transition-colors">
+                        <span class="px-3 py-2.5 text-xs text-slate-500 bg-slate-50 border-r border-slate-200 shrink-0 flex items-center">/</span>
+                        <input asp-for="Slug" id="page-slug" autocomplete="off"
+                               class="flex-1 px-3 py-2.5 text-sm bg-white text-slate-900 focus:outline-none font-mono" />
+                    </div>
+                    <span asp-validation-for="Slug" class="text-xs text-red-500 mt-1 block"></span>
+                    <p class="mt-1 text-xs text-amber-500">⚠ Thay đổi slug sẽ làm mất URL cũ.</p>
+                </div>
+            </div>
+
+            @* ── Section Builder ── *@
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+                <div class="flex items-center justify-between mb-1">
+                    <h3 class="text-sm font-semibold text-slate-700">Page Sections</h3>
+                    <div class="flex items-center gap-2">
+                        @* ── Library picker ── *@
+                        <div class="relative" id="lib-menu-wrap">
+                            <button type="button" id="btn-lib"
+                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-600 bg-slate-100 border border-slate-200 rounded-lg hover:bg-slate-200 transition-colors"
+                                    title="Chèn từ thư viện">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                                </svg>
+                                Thư viện
+                            </button>
+                            <div id="lib-dropdown"
+                                 class="hidden absolute right-0 top-full mt-1 w-64 bg-white border border-slate-200 rounded-xl shadow-lg z-20 py-1.5 text-sm max-h-72 overflow-y-auto">
+                                <p class="px-3 pt-1 pb-1 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Thư viện section</p>
+                                <div id="lib-items-list">
+                                    <p class="px-3 py-2 text-xs text-slate-400">Đang tải...</p>
+                                </div>
+                                <div class="border-t border-slate-100 mt-1 pt-1">
+                                    <a href="/admin/component-library" target="_blank"
+                                       class="flex items-center gap-2 px-3 py-1.5 text-xs text-blue-600 hover:bg-blue-50">
+                                        ✏️ Quản lý thư viện
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="relative" id="add-section-menu-wrap">
+                            <button type="button" id="btn-add-section"
+                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                                </svg>
+                                Thêm section
+                                <svg class="w-3 h-3 ml-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/>
+                                </svg>
+                            </button>
+                            @* Type picker dropdown *@
+                            <div id="add-section-dropdown"
+                                 class="hidden absolute right-0 top-full mt-1 w-52 bg-white border border-slate-200 rounded-xl shadow-lg z-20 py-1.5 text-sm">
+                                <p class="px-3 pt-1 pb-1.5 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Nội dung</p>
+                                <button type="button" class="pick-type w-full text-left px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2.5" data-type="TextBlock">
+                                    <span class="w-2 h-2 rounded-full bg-green-400 shrink-0"></span>TextBlock <span class="ml-auto text-[10px] text-slate-400">rich text</span>
+                                </button>
+                                <button type="button" class="pick-type w-full text-left px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2.5" data-type="RichText">
+                                    <span class="w-2 h-2 rounded-full bg-green-400 shrink-0"></span>RichText <span class="ml-auto text-[10px] text-slate-400">editor</span>
+                                </button>
+                                <button type="button" class="pick-type w-full text-left px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2.5" data-type="RawHtml">
+                                    <span class="w-2 h-2 rounded-full bg-sky-400 shrink-0"></span>RawHtml <span class="ml-auto text-[10px] text-slate-400">HTML code</span>
+                                </button>
+                                <button type="button" class="pick-type w-full text-left px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2.5" data-type="CssBlock">
+                                    <span class="w-2 h-2 rounded-full bg-sky-400 shrink-0"></span>CssBlock <span class="ml-auto text-[10px] text-slate-400">CSS code</span>
+                                </button>
+                                <button type="button" class="pick-type w-full text-left px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2.5" data-type="JsBlock">
+                                    <span class="w-2 h-2 rounded-full bg-sky-400 shrink-0"></span>JsBlock <span class="ml-auto text-[10px] text-slate-400">JS code</span>
+                                </button>
+                                <hr class="my-1 border-slate-100">
+                                <p class="px-3 pt-1 pb-1.5 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Components</p>
+                                <button type="button" class="pick-type w-full text-left px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2.5" data-type="Hero">
+                                    <span class="w-2 h-2 rounded-full bg-violet-400 shrink-0"></span>Hero
+                                </button>
+                                <button type="button" class="pick-type w-full text-left px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2.5" data-type="Gallery">
+                                    <span class="w-2 h-2 rounded-full bg-violet-400 shrink-0"></span>Gallery
+                                </button>
+                                <button type="button" class="pick-type w-full text-left px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2.5" data-type="ContactForm">
+                                    <span class="w-2 h-2 rounded-full bg-violet-400 shrink-0"></span>ContactForm
+                                </button>
+                                <button type="button" class="pick-type w-full text-left px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2.5" data-type="ProductList">
+                                    <span class="w-2 h-2 rounded-full bg-violet-400 shrink-0"></span>ProductList
+                                </button>
+                                <button type="button" class="pick-type w-full text-left px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2.5" data-type="Testimonials">
+                                    <span class="w-2 h-2 rounded-full bg-violet-400 shrink-0"></span>Testimonials
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <p class="text-xs text-slate-400 mb-4">Kéo ↑↓ để sắp xếp. Lưu trang để lưu sections.</p>
+
+                <input type="hidden" asp-for="SectionsJson" id="SectionsJson" />
+
+                <p id="sections-empty" class="text-center py-10 text-slate-400 text-sm">
+                    Chưa có section nào. Nhấn <strong>Thêm section</strong> để bắt đầu.
+                </p>
+                <div id="sections-container" class="space-y-3"></div>
+            </div>
+
+            @* SEO *@
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+                <h3 class="text-sm font-semibold text-slate-700 mb-4">SEO</h3>
+                <div class="space-y-4">
+                    <div>
+                        <label asp-for="MetaTitle" class="block mb-1.5 text-[13px] font-medium text-slate-600">
+                            Meta Title <span class="text-slate-400 font-normal">(tối đa 70 ký tự)</span>
+                        </label>
+                        <input asp-for="MetaTitle" id="meta-title" maxlength="70"
+                               class="block w-full px-3 py-2.5 text-sm bg-white border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" />
+                        <div class="flex justify-between mt-1">
+                            <span asp-validation-for="MetaTitle" class="text-xs text-red-500"></span>
+                            <span id="meta-title-count" class="text-xs text-slate-400">0/70</span>
+                        </div>
+                    </div>
+                    <div>
+                        <label asp-for="MetaDescription" class="block mb-1.5 text-[13px] font-medium text-slate-600">
+                            Meta Description <span class="text-slate-400 font-normal">(tối đa 160 ký tự)</span>
+                        </label>
+                        <textarea asp-for="MetaDescription" id="meta-desc" rows="2" maxlength="160"
+                                  class="block w-full px-3 py-2.5 text-sm bg-white border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"></textarea>
+                        <div class="flex justify-between mt-1">
+                            <span asp-validation-for="MetaDescription" class="text-xs text-red-500"></span>
+                            <span id="meta-desc-count" class="text-xs text-slate-400">0/160</span>
+                        </div>
+                    </div>
+                    <div>
+                        <label asp-for="CanonicalUrl" class="block mb-1.5 text-[13px] font-medium text-slate-600">Canonical URL</label>
+                        <input asp-for="CanonicalUrl" placeholder="https://..."
+                               class="block w-full px-3 py-2.5 text-sm bg-white border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" />
+                    </div>
+                    <div class="flex items-center gap-2.5 pt-1">
+                        <input asp-for="IsIndexable" type="checkbox" id="is-indexable"
+                               class="w-4 h-4 text-blue-600 bg-white border-slate-300 rounded accent-blue-600" />
+                        <label asp-for="IsIndexable" class="text-[13px] text-slate-600 cursor-pointer">
+                            Cho phép Google index trang này
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @* ── Sidebar ── *@
+        <div class="space-y-4">
+
+            @* Publish *@
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+                <h3 class="text-sm font-semibold text-slate-700 mb-4">Xuất bản</h3>
+                <div class="space-y-3 mb-4">
+                    <div>
+                        <label asp-for="Status" class="block mb-1.5 text-[13px] font-medium text-slate-600">Trạng thái</label>
+                        <select asp-for="Status" asp-items="Html.GetEnumSelectList<PageStatus>()"
+                                class="block w-full px-3 py-2.5 text-sm bg-white border border-slate-200 rounded-xl text-slate-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                        </select>
+                    </div>
+                    <div>
+                        <label asp-for="Template" class="block mb-1.5 text-[13px] font-medium text-slate-600">Template</label>
+                        <select asp-for="Template"
+                                class="block w-full px-3 py-2.5 text-sm bg-white border border-slate-200 rounded-xl text-slate-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                            <option value="Default">Default</option>
+                            <option value="LandingPage">LandingPage</option>
+                            <option value="Contact">Contact</option>
+                            <option value="About">About</option>
+                            <option value="FullWidth">FullWidth</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="flex gap-2 pt-3 border-t border-slate-100">
+                    <button type="submit"
+                            class="flex-1 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-colors shadow-sm">
+                        Lưu thay đổi
+                    </button>
+                    <a asp-area="Admin" asp-controller="Pages" asp-action="Index"
+                       class="px-4 py-2 text-sm font-medium text-slate-600 bg-slate-100 rounded-xl hover:bg-slate-200 transition-colors">
+                        Hủy
+                    </a>
+                </div>
+            </div>
+
+            @* Section summary *@
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4">
+                <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Sections</h4>
+                <p id="sections-count" class="text-sm text-slate-700 font-medium">0 sections</p>
+                <div id="sections-type-list" class="mt-2 space-y-1 text-xs text-slate-500"></div>
+            </div>
+
+            @* Preview link *@
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4">
+                <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">Xem trước</h4>
+                <a href="/@Model.Slug" target="_blank"
+                   class="inline-flex items-center gap-2 text-sm text-blue-600 hover:underline font-medium">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M10 6H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                    /@Model.Slug
+                </a>
+            </div>
+
+            @* Danger zone *@
+            <div class="bg-red-50 border border-red-100 rounded-2xl p-4">
+                <h4 class="text-xs font-semibold text-red-600 uppercase tracking-wide mb-3">Vùng nguy hiểm</h4>
+                <form asp-action="Delete" asp-route-id="@Model.Id" method="post"
+                      onsubmit="return confirm('Xóa trang này? Hành động không thể hoàn tác.');">
+                    @Html.AntiForgeryToken()
+                    <button type="submit"
+                            class="w-full px-4 py-2 text-sm font-medium text-red-600 border border-red-200 bg-white rounded-xl hover:bg-red-50 transition-colors">
+                        Xóa trang này
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</form>
+
+@section Scripts {
+@* ── CodeMirror 5 ── *@
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.17/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.17/mode/xml/xml.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.17/mode/css/css.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.17/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.17/mode/htmlmixed/htmlmixed.min.js"></script>
+@* ── Quill 1.3.7 ── *@
+<script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
+@* Dữ liệu sections từ server (tránh value attribute bị cắt/lỗi khi JSON dài) *@
+<script>
+    window.__pageSectionsFromServer = @Html.Raw(Model.SectionsJson ?? "[]");
+</script>
+<script>
+(function () {
+    'use strict';
+
+    // ── Meta counters ────────────────────────────────────────────────────────
+    function counter(inputId, counterId, max) {
+        var el = document.getElementById(inputId), cnt = document.getElementById(counterId);
+        if (!el || !cnt) return;
+        function upd() { var l = el.value.length; cnt.textContent = l + '/' + max; cnt.className = 'text-xs ' + (l > max * 0.9 ? 'text-orange-500' : 'text-slate-400'); }
+        el.addEventListener('input', upd); upd();
+    }
+    counter('meta-title', 'meta-title-count', 70);
+    counter('meta-desc', 'meta-desc-count', 160);
+
+    // ── Section Builder ──────────────────────────────────────────────────────
+
+    function isCodeType(t)  { return t === 'RawHtml' || t === 'CssBlock' || t === 'JsBlock'; }
+    function isRichType(t)  { return t === 'TextBlock' || t === 'RichText'; }
+
+    function codeMode(t) {
+        if (t === 'CssBlock')  return 'css';
+        if (t === 'JsBlock')   return 'javascript';
+        return 'htmlmixed';
+    }
+    function codeKey(t) {
+        if (t === 'CssBlock')  return 'css';
+        if (t === 'JsBlock')   return 'js';
+        return 'html';
+    }
+    function typeColor(t) {
+        if (isCodeType(t))  return '#0ea5e9';
+        if (isRichType(t))  return '#22c55e';
+        return '#a78bfa';
+    }
+    function typeLabel(t) {
+        var map = { TextBlock: 'Rich Text', RichText: 'Rich Text', RawHtml: 'HTML', CssBlock: 'CSS', JsBlock: 'JS',
+                    Hero: 'Hero', Gallery: 'Gallery', ContactForm: 'Form', ProductList: 'Products', Testimonials: 'Testimonials' };
+        return map[t] || t;
+    }
+
+    // ── Static component field definitions ────────────────────────────────────
+    var COMPONENT_FIELDS = {
+        Hero: [
+            { key: 'heading',    label: 'Tiêu đề chính', type: 'text',     span: 2, placeholder: 'Nhập tiêu đề hero...' },
+            { key: 'subheading', label: 'Mô tả phụ',      type: 'textarea', span: 2, placeholder: 'Nhập mô tả ngắn...' },
+            { key: 'buttonText', label: 'Nhãn nút CTA',   type: 'text',     span: 1, placeholder: 'Xem thêm' },
+            { key: 'buttonUrl',  label: 'URL nút CTA',    type: 'text',     span: 1, placeholder: '/lien-he' }
+        ],
+        ProductList: [
+            { key: 'title',      label: 'Tiêu đề section', type: 'text',   span: 2, placeholder: 'Sản phẩm nổi bật' },
+            { key: 'categoryId', label: 'ID danh mục',     type: 'text',   span: 1, placeholder: '' },
+            { key: 'limit',      label: 'Số sản phẩm',    type: 'number', span: 1, placeholder: '6' }
+        ]
+    };
+
+    // ── Repeatable component definitions ──────────────────────────────────────
+    var REPEATABLE_COMPONENTS = {
+        Gallery: {
+            headerFields: [
+                { key: 'title', label: 'Tiêu đề gallery', type: 'text', span: 2, placeholder: 'Thư viện ảnh' }
+            ],
+            itemFields: [
+                { key: 'image', label: 'URL ảnh',  type: 'text', span: 1, placeholder: '/images/anh.jpg', hasUpload: true },
+                { key: 'alt',   label: 'Alt text', type: 'text', span: 1, placeholder: 'Mô tả ảnh' }
+            ],
+            itemLabel: 'Ảnh',
+            addLabel:  '+ Thêm ảnh',
+            keyFn: function(fkey, i) { return fkey + i; }
+        },
+        Testimonials: {
+            headerFields: [
+                { key: 'title', label: 'Tiêu đề section', type: 'text', span: 2, placeholder: 'Khách hàng nói gì về chúng tôi' }
+            ],
+            itemFields: [
+                { key: 'name',    label: 'Tên khách hàng',    type: 'text',     span: 1, placeholder: 'Nguyễn Văn A' },
+                { key: 'role',    label: 'Chức vụ / Công ty', type: 'text',     span: 1, placeholder: 'Giám đốc' },
+                { key: 'content', label: 'Nội dung nhận xét', type: 'textarea', span: 2, placeholder: 'Nhận xét...' }
+            ],
+            itemLabel: 'Khách hàng',
+            addLabel:  '+ Thêm khách hàng',
+            keyFn: function(fkey, i) { return 'item' + i + '_' + fkey; }
+        },
+        ContactForm: {
+            headerFields: [
+                { key: 'title',         label: 'Tiêu đề form',    type: 'text', span: 2, placeholder: 'Liên hệ với chúng tôi' },
+                { key: 'submitUrl',     label: 'Submit URL',       type: 'text', span: 1, placeholder: '/api/contact' },
+                { key: 'submitBtnText', label: 'Nhãn nút Submit',  type: 'text', span: 1, placeholder: 'Gửi' }
+            ],
+            itemFields: [
+                { key: 'label',       label: 'Nhãn field',    type: 'text',     span: 1, placeholder: 'Họ và tên' },
+                { key: 'name',        label: 'Name (HTML)',   type: 'text',     span: 1, placeholder: 'fullname' },
+                { key: 'type',        label: 'Loại',          type: 'select',   span: 1,
+                  options: [
+                      { value: 'text',     label: 'Text' },
+                      { value: 'email',    label: 'Email' },
+                      { value: 'tel',      label: 'Phone' },
+                      { value: 'textarea', label: 'Textarea' },
+                      { value: 'select',   label: 'Dropdown' }
+                  ]
+                },
+                { key: 'required',     label: 'Bắt buộc',        type: 'checkbox',  span: 1 },
+                { key: 'placeholder',  label: 'Placeholder',      type: 'text',      span: 2, placeholder: 'Nhập...' },
+                { key: 'options',      label: 'Tùy chọn (mỗi dòng 1 option)', type: 'textarea', span: 2,
+                  placeholder: 'Hà Nội\nTP.HCM\nĐà Nẵng',
+                  showWhen: { field: 'type', value: 'select' }
+                }
+            ],
+            itemLabel: 'Field',
+            addLabel:  '+ Thêm field',
+            keyFn: function(fkey, i) { return 'field' + i + '_' + fkey; }
+        }
+    };
+
+    function isComponentType(t)  { return !!COMPONENT_FIELDS[t]; }
+    function isRepeatableType(t) { return !!REPEATABLE_COMPONENTS[t]; }
+
+    // ── HTML escape ───────────────────────────────────────────────────────────
+    function esc(s) {
+        if (s == null) return '';
+        return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    // ── CSRF token for upload fetch ───────────────────────────────────────────
+    function csrfToken() {
+        var el = document.querySelector('input[name="__RequestVerificationToken"]');
+        return el ? el.value : '';
+    }
+
+    // ── Image upload helper ───────────────────────────────────────────────────
+    function uploadImage(urlInput, onChange) {
+        var fi = document.createElement('input');
+        fi.type = 'file';
+        fi.accept = 'image/*';
+        fi.onchange = function() {
+            var file = fi.files[0];
+            if (!file) return;
+            var fd = new FormData();
+            fd.append('file', file);
+            fetch('/admin/upload/image', {
+                method: 'POST',
+                headers: { 'RequestVerificationToken': csrfToken() },
+                body: fd
+            })
+            .then(function(r) { return r.ok ? r.json() : Promise.reject(r.status); })
+            .then(function(data) {
+                if (data.url) {
+                    urlInput.value = data.url;
+                    urlInput.dispatchEvent(new Event('input'));
+                    if (onChange) onChange();
+                }
+            })
+            .catch(function() { alert('Upload thất bại. Vui lòng thử lại.'); });
+        };
+        fi.click();
+    }
+
+    // ── Input CSS helper ──────────────────────────────────────────────────────
+    var INPUT_CLS = 'comp-field block w-full px-2 py-1.5 text-xs border border-slate-200 rounded-lg bg-white text-slate-700 focus:ring-1 focus:ring-blue-400 focus:outline-none transition-colors';
+
+    // Render a single labeled field into parent element
+    // Supports types: text, textarea, number, select, checkbox
+    // Supports: hasUpload (adds upload btn), showWhen (conditional visibility)
+    function appendField(parent, f, val, extraCls, onChangeCb) {
+        var div = document.createElement('div');
+        div.className = (f.span === 2 ? 'col-span-2' : '');
+
+        if (f.showWhen) {
+            div.setAttribute('data-show-when-field', f.showWhen.field);
+            div.setAttribute('data-show-when-value', f.showWhen.value);
+            div.style.display = 'none'; // hidden until wired
+        }
+
+        var cls = INPUT_CLS + (extraCls ? ' ' + extraCls : '');
+
+        if (f.type === 'checkbox') {
+            var chkChecked = val === '1' || val === true || val === 'true';
+            div.innerHTML =
+                '<label class="block text-[11px] font-medium text-slate-500 mb-1">' + esc(f.label) + '</label>' +
+                '<label class="flex items-center gap-1.5 cursor-pointer">' +
+                    '<input type="checkbox" class="' + cls + ' w-3.5 h-3.5 accent-blue-600" data-key="' + esc(f.key) + '"' +
+                        (extraCls ? ' data-extra-cls="' + esc(extraCls) + '"' : '') +
+                        (chkChecked ? ' checked' : '') + '>' +
+                    '<span class="text-[11px] text-slate-600">Có</span>' +
+                '</label>';
+            parent.appendChild(div);
+            return div;
+        }
+
+        var inputHtml;
+        if (f.type === 'textarea') {
+            inputHtml = '<textarea class="' + cls + ' resize-y min-h-[55px]" data-key="' + esc(f.key) + '" placeholder="' + esc(f.placeholder || '') + '">' + esc(val) + '</textarea>';
+        } else if (f.type === 'select') {
+            inputHtml = '<select class="' + cls + '" data-key="' + esc(f.key) + '">';
+            (f.options || []).forEach(function(o) {
+                inputHtml += '<option value="' + esc(o.value) + '"' + (o.value === val ? ' selected' : '') + '>' + esc(o.label) + '</option>';
+            });
+            inputHtml += '</select>';
+        } else {
+            inputHtml = '<input type="' + (f.type === 'number' ? 'number' : 'text') + '" class="' + cls + '" data-key="' + esc(f.key) + '" value="' + esc(val) + '" placeholder="' + esc(f.placeholder || '') + '">';
+        }
+
+        if (f.hasUpload) {
+            div.innerHTML =
+                '<label class="block text-[11px] font-medium text-slate-500 mb-1">' + esc(f.label) + '</label>' +
+                '<div class="flex gap-1">' +
+                    inputHtml.replace('class="' + cls, 'class="flex-1 ' + cls.replace('block w-full', '').trim()) +
+                    '<button type="button" class="btn-browse shrink-0" title="Chọn từ thư viện">🖼️</button>' +
+                    '<button type="button" class="btn-upload shrink-0" title="Upload ảnh">📎</button>' +
+                '</div>';
+        } else {
+            div.innerHTML =
+                '<label class="block text-[11px] font-medium text-slate-500 mb-1">' + esc(f.label) + '</label>' +
+                inputHtml;
+        }
+
+        // Wire upload button
+        var uploadBtn = div.querySelector('.btn-upload');
+        if (uploadBtn) {
+            uploadBtn.addEventListener('click', function() {
+                var inp = div.querySelector('[data-key]');
+                if (inp) uploadImage(inp, onChangeCb);
+            });
+        }
+        // Wire browse button (media library picker)
+        var browseBtn = div.querySelector('.btn-browse');
+        if (browseBtn) {
+            browseBtn.addEventListener('click', function() {
+                var inp = div.querySelector('[data-key]');
+                if (inp) openImagePicker(inp, onChangeCb);
+            });
+        }
+
+        parent.appendChild(div);
+        return div;
+    }
+
+    // Wire showWhen fields inside a container
+    function wireShowWhen(container) {
+        var showWhenEls = container.querySelectorAll('[data-show-when-field]');
+        showWhenEls.forEach(function(el) {
+            var triggerKey   = el.getAttribute('data-show-when-field');
+            var triggerValue = el.getAttribute('data-show-when-value');
+            var trigger = container.querySelector('[data-key="' + triggerKey + '"]');
+            if (!trigger) return;
+            function update() { el.style.display = trigger.value === triggerValue ? '' : 'none'; }
+            trigger.addEventListener('change', update);
+            trigger.addEventListener('input', update);
+            update();
+        });
+    }
+
+    // ── Static component editor ───────────────────────────────────────────────
+    function buildComponentEditor(editorArea, sec, fields) {
+        var grid = document.createElement('div');
+        grid.className = 'comp-fields grid grid-cols-2 gap-2';
+        fields.forEach(function(f) {
+            appendField(grid, f, (sec.data && sec.data[f.key] != null) ? sec.data[f.key] : '');
+        });
+        editorArea.appendChild(grid);
+    }
+
+    // ── Repeatable component editor ───────────────────────────────────────────
+    function extractRptItems(data, cfg) {
+        var items = [];
+        if (!data) return items;
+        for (var i = 1; ; i++) {
+            var found = false, item = {};
+            cfg.itemFields.forEach(function(f) {
+                var k = cfg.keyFn(f.key, i);
+                if (data[k] !== undefined) { found = true; item[f.key] = data[k]; }
+                else { item[f.key] = ''; }
+            });
+            if (!found) break;
+            items.push(item);
+        }
+        return items;
+    }
+
+    function buildRptItemCard(itemData, cfg, onChange) {
+        var card = document.createElement('div');
+        card.className = 'rpt-item border border-slate-100 rounded-lg p-2.5 bg-slate-50 relative';
+
+        var delBtn = document.createElement('button');
+        delBtn.type = 'button';
+        delBtn.className = 'absolute top-2 right-2 w-5 h-5 flex items-center justify-center text-red-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors';
+        delBtn.title = 'Xóa';
+        delBtn.innerHTML = '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>';
+        delBtn.addEventListener('click', function() { card.remove(); onChange(); });
+        card.appendChild(delBtn);
+
+        var grid = document.createElement('div');
+        grid.className = 'grid grid-cols-2 gap-2 pr-6';
+        cfg.itemFields.forEach(function(f) {
+            appendField(grid, f, itemData[f.key] != null ? itemData[f.key] : '', 'rpt-item-field', onChange);
+        });
+        card.appendChild(grid);
+
+        // Wire field changes (input + change for selects/checkboxes)
+        grid.querySelectorAll('[data-key]').forEach(function(el) {
+            el.addEventListener('input', onChange);
+            el.addEventListener('change', onChange);
+        });
+
+        wireShowWhen(grid);
+
+        return card;
+    }
+
+    function buildRepeatableEditor(editorArea, sec, cfg, onChange) {
+        var wrap = document.createElement('div');
+        wrap.className = 'rpt-editor space-y-3';
+
+        if (cfg.headerFields && cfg.headerFields.length) {
+            var hdrGrid = document.createElement('div');
+            hdrGrid.className = 'rpt-header grid grid-cols-2 gap-2';
+            cfg.headerFields.forEach(function(f) {
+                appendField(hdrGrid, f, (sec.data && sec.data[f.key] != null) ? sec.data[f.key] : '', 'rpt-header-field', onChange);
+            });
+            hdrGrid.querySelectorAll('[data-key]').forEach(function(el) {
+                el.addEventListener('input', onChange);
+                el.addEventListener('change', onChange);
+            });
+            wrap.appendChild(hdrGrid);
+        }
+
+        var panel = document.createElement('div');
+        panel.className = 'border-t border-slate-100 pt-2';
+
+        var titleBar = document.createElement('div');
+        titleBar.className = 'flex items-center justify-between mb-2';
+        titleBar.innerHTML =
+            '<span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wide">' + esc(cfg.itemLabel) + 's</span>' +
+            '<button type="button" class="rpt-add-btn text-[11px] font-medium text-blue-600 hover:text-blue-800 transition-colors">' + esc(cfg.addLabel) + '</button>';
+        panel.appendChild(titleBar);
+
+        var itemsList = document.createElement('div');
+        itemsList.className = 'rpt-items space-y-2';
+        extractRptItems(sec.data, cfg).forEach(function(itemData) {
+            itemsList.appendChild(buildRptItemCard(itemData, cfg, onChange));
+        });
+        panel.appendChild(itemsList);
+        wrap.appendChild(panel);
+        editorArea.appendChild(wrap);
+
+        titleBar.querySelector('.rpt-add-btn').addEventListener('click', function() {
+            var emptyItem = {};
+            cfg.itemFields.forEach(function(f) { emptyItem[f.key] = ''; });
+            var newCard = buildRptItemCard(emptyItem, cfg, onChange);
+            itemsList.appendChild(newCard);
+            var first = newCard.querySelector('input,textarea,select');
+            if (first) first.focus();
+            onChange();
+        });
+    }
+
+    // Read repeatable editor → sec.data
+    function readRepeatableData(card, sec, cfg) {
+        sec.data = {};
+        card.querySelectorAll('.rpt-header-field[data-key]').forEach(function(el) {
+            sec.data[el.getAttribute('data-key')] = el.type === 'checkbox' ? (el.checked ? '1' : '') : el.value;
+        });
+        var idx = 1;
+        card.querySelectorAll('.rpt-item').forEach(function(itemCard) {
+            cfg.itemFields.forEach(function(f) {
+                var el = itemCard.querySelector('[data-key="' + f.key + '"]');
+                if (el) sec.data[cfg.keyFn(f.key, idx)] = el.type === 'checkbox' ? (el.checked ? '1' : '') : el.value;
+            });
+            idx++;
+        });
+    }
+
+    // ── Style panel ───────────────────────────────────────────────────────────
+    function buildStylePanel(sec) {
+        var d = sec.data || {};
+        var panel = document.createElement('div');
+        panel.className = 'style-panel border border-slate-100 rounded-lg p-2.5 bg-slate-50/60';
+
+        // Collapse toggle
+        var toggleBar = document.createElement('button');
+        toggleBar.type = 'button';
+        toggleBar.className = 'flex items-center gap-1.5 w-full text-left text-[11px] font-semibold text-slate-400 uppercase tracking-wide mb-0';
+        toggleBar.innerHTML =
+            '<svg class="style-chevron w-3 h-3 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>' +
+            'Style & Nền';
+
+        var content = document.createElement('div');
+        content.className = 'style-panel-body grid grid-cols-2 gap-2 mt-2 hidden';
+
+        toggleBar.addEventListener('click', function() {
+            content.classList.toggle('hidden');
+            toggleBar.querySelector('.style-chevron').style.transform = content.classList.contains('hidden') ? '' : 'rotate(90deg)';
+        });
+        panel.appendChild(toggleBar);
+        panel.appendChild(content);
+
+        // 1. Text alignment
+        var alignDiv = document.createElement('div');
+        alignDiv.className = 'col-span-1';
+        var alignVal = d['_align'] || '';
+        alignDiv.innerHTML =
+            '<label class="block text-[11px] font-medium text-slate-500 mb-1">Căn chỉnh văn bản</label>' +
+            '<div class="flex gap-1">' +
+                ['', 'text-start', 'text-center', 'text-end'].map(function(v) {
+                    var lbl = v === '' ? 'Auto' : v === 'text-start' ? 'L' : v === 'text-center' ? 'C' : 'R';
+                    return '<button type="button" class="align-btn' + (alignVal === v ? ' active' : '') + '" data-align="' + v + '">' + lbl + '</button>';
+                }).join('') +
+            '</div>' +
+            '<input type="hidden" class="sec-style-field" data-key="_align" value="' + esc(alignVal) + '">';
+        content.appendChild(alignDiv);
+
+        // 2. Padding preset
+        var padDiv = document.createElement('div');
+        padDiv.className = 'col-span-1';
+        var padVal = d['_padding'] || '';
+        padDiv.innerHTML =
+            '<label class="block text-[11px] font-medium text-slate-500 mb-1">Padding</label>' +
+            '<select class="sec-style-field block w-full px-2 py-1.5 text-xs border border-slate-200 rounded-lg bg-white" data-key="_padding">' +
+                [['', 'Mặc định'], ['py-4', 'py-4 (nhỏ)'], ['py-8', 'py-8 (vừa)'], ['py-16', 'py-16 (lớn)'], ['py-24', 'py-24 (rất lớn)']].map(function(o) {
+                    return '<option value="' + o[0] + '"' + (padVal === o[0] ? ' selected' : '') + '>' + o[1] + '</option>';
+                }).join('') +
+            '</select>';
+        content.appendChild(padDiv);
+
+        // 3. Background color (text input + color picker companion)
+        var bgColorDiv = document.createElement('div');
+        bgColorDiv.className = 'col-span-1';
+        var bgColorVal = d['_bg_color'] || '';
+        bgColorDiv.innerHTML =
+            '<label class="block text-[11px] font-medium text-slate-500 mb-1">Màu nền</label>' +
+            '<div class="flex gap-1 items-center">' +
+                '<input type="color" class="style-color-picker h-7 w-8 p-0.5 border border-slate-200 rounded-lg cursor-pointer shrink-0" value="' + esc(bgColorVal || '#3b82f6') + '">' +
+                '<input type="text" class="sec-style-field flex-1 min-w-0 px-2 py-1.5 text-xs border border-slate-200 rounded-lg bg-white font-mono" data-key="_bg_color" value="' + esc(bgColorVal) + '" placeholder="#ffffff hoặc để trống">' +
+                '<button type="button" class="style-clear-color text-[10px] px-2 py-1 text-slate-500 border border-slate-200 rounded-lg hover:bg-slate-100 transition-colors shrink-0">Xóa</button>' +
+            '</div>';
+        content.appendChild(bgColorDiv);
+
+        // 4. Background image
+        var bgImgDiv = document.createElement('div');
+        bgImgDiv.className = 'col-span-1';
+        var bgImgVal = d['_bg_image'] || '';
+        bgImgDiv.innerHTML =
+            '<label class="block text-[11px] font-medium text-slate-500 mb-1">Ảnh nền</label>' +
+            '<div class="flex gap-1">' +
+                '<input type="text" class="sec-style-field flex-1 min-w-0 px-2 py-1.5 text-xs border border-slate-200 rounded-lg bg-white" data-key="_bg_image" value="' + esc(bgImgVal) + '" placeholder="/images/bg.jpg">' +
+                '<button type="button" class="style-browse-bg btn-browse shrink-0" title="Chọn từ thư viện">🖼️</button>' +
+                '<button type="button" class="style-upload-bg btn-upload shrink-0" title="Upload ảnh nền">📎</button>' +
+            '</div>';
+        content.appendChild(bgImgDiv);
+
+        return panel;
+    }
+
+    // Wire style panel events (call after panel is in DOM)
+    function wireStylePanel(panel, readCard) {
+        // Alignment buttons
+        panel.querySelectorAll('.align-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                panel.querySelectorAll('.align-btn').forEach(function(b) { b.classList.remove('active'); });
+                btn.classList.add('active');
+                var hiddenInput = panel.querySelector('.sec-style-field[data-key="_align"]');
+                if (hiddenInput) hiddenInput.value = btn.getAttribute('data-align');
+                readCard();
+            });
+        });
+
+        // Color picker ↔ text input sync
+        var colorPicker = panel.querySelector('.style-color-picker');
+        var colorText   = panel.querySelector('.sec-style-field[data-key="_bg_color"]');
+        if (colorPicker && colorText) {
+            colorPicker.addEventListener('input', function() { colorText.value = colorPicker.value; readCard(); });
+            colorText.addEventListener('input', function() {
+                if (/^#[0-9a-fA-F]{3,8}$/.test(colorText.value)) colorPicker.value = colorText.value;
+                readCard();
+            });
+        }
+
+        // Clear color button
+        var clearColor = panel.querySelector('.style-clear-color');
+        if (clearColor) {
+            clearColor.addEventListener('click', function() {
+                if (colorText) { colorText.value = ''; readCard(); }
+            });
+        }
+
+        // Upload bg image button
+        var uploadBg = panel.querySelector('.style-upload-bg');
+        if (uploadBg) {
+            uploadBg.addEventListener('click', function() {
+                var inp = panel.querySelector('.sec-style-field[data-key="_bg_image"]');
+                if (inp) uploadImage(inp, readCard);
+            });
+        }
+        // Browse bg image from media library
+        var browseBg = panel.querySelector('.style-browse-bg');
+        if (browseBg) {
+            browseBg.addEventListener('click', function() {
+                var inp = panel.querySelector('.sec-style-field[data-key="_bg_image"]');
+                if (inp) openImagePicker(inp, readCard);
+            });
+        }
+
+        // Padding select + bg color input
+        panel.querySelectorAll('.sec-style-field').forEach(function(el) {
+            el.addEventListener('input', readCard);
+            el.addEventListener('change', readCard);
+        });
+    }
+
+    // Read style fields from panel into sec.data
+    function readStyleFields(card, sec) {
+        card.querySelectorAll('.sec-style-field[data-key]').forEach(function(el) {
+            var k = el.getAttribute('data-key');
+            if (!k) return;
+            sec.data[k] = el.value;
+        });
+    }
+
+    // ── Section state ─────────────────────────────────────────────────────────
+    var sections  = [];
+    var jsonInput = document.getElementById('SectionsJson');
+    var container = document.getElementById('sections-container');
+    var emptyMsg  = document.getElementById('sections-empty');
+    var countEl   = document.getElementById('sections-count');
+    var typeListEl= document.getElementById('sections-type-list');
+
+    // ── Serialize / sync hidden field ─────────────────────────────────────────
+    // data phải toàn string để backend (Dictionary<string, string>) deserialize đúng
+    function save() {
+        var clean = sections.map(function(s) {
+            return { sectionType: s.sectionType, sortOrder: s.sortOrder, isVisible: s.isVisible, cssClass: s.cssClass, data: normalizeDataToStrings(s.data || {}) };
+        });
+        jsonInput.value = JSON.stringify(clean);
+
+        var n = sections.length;
+        if (countEl) countEl.textContent = n + (n === 1 ? ' section' : ' sections');
+        if (typeListEl) {
+            typeListEl.innerHTML = sections.map(function(s, i) {
+                return '<div class="flex items-center gap-1.5"><span style="width:6px;height:6px;border-radius:50%;background:' + typeColor(s.sectionType) + ';display:inline-block"></span>#' + (i+1) + ' ' + typeLabel(s.sectionType) + '</div>';
+            }).join('');
+        }
+    }
+
+    function destroyEditors(sec) {
+        if (sec._cm)    { try { sec._cm.toTextArea(); } catch(e){} sec._cm = null; }
+        if (sec._quill) { sec._quill = null; }
+    }
+
+    function render() {
+        sections.forEach(destroyEditors);
+        container.innerHTML = '';
+        if (sections.length === 0) {
+            emptyMsg.style.display = '';
+        } else {
+            emptyMsg.style.display = 'none';
+            sections.forEach(function(s, i) { container.appendChild(buildCard(s, i)); });
+            // CodeMirror is initialized inside buildCard() before the card is in the DOM,
+            // so dimensions are unknown and content is invisible until clicked. Refresh now.
+            sections.forEach(function(s) { if (s._cm) { s._cm.refresh(); } });
+        }
+        save();
+    }
+
+    // ── Build one section card ────────────────────────────────────────────────
+    function buildCard(sec, idx) {
+        var card = document.createElement('div');
+        card.className = 'border border-slate-200 rounded-xl bg-white overflow-hidden';
+
+        // ── Header ────────────────────────────────────────────────────────────
+        var header = document.createElement('div');
+        header.className = 'flex items-center gap-2 px-4 py-2.5 bg-slate-50 border-b border-slate-100';
+        header.innerHTML =
+            '<span class="text-xs font-bold text-slate-400 w-5 tabular-nums shrink-0">' + (idx + 1) + '</span>' +
+            '<span class="text-xs font-semibold px-2 py-0.5 rounded-full" style="background:' + typeColor(sec.sectionType) + '22;color:' + typeColor(sec.sectionType) + '">' + sec.sectionType + '</span>' +
+            '<div class="flex-1"></div>' +
+            '<label class="flex items-center gap-1.5 text-xs text-slate-600 select-none cursor-pointer shrink-0">' +
+                '<input type="checkbox" class="sec-visible accent-blue-600 w-3.5 h-3.5"' + (sec.isVisible ? ' checked' : '') + '> Hiển thị' +
+            '</label>' +
+            '<button type="button" class="btn-up  w-7 h-7 flex items-center justify-center rounded text-slate-400 hover:bg-slate-200 hover:text-slate-700 transition-colors" title="Lên">' +
+                '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/></svg>' +
+            '</button>' +
+            '<button type="button" class="btn-down w-7 h-7 flex items-center justify-center rounded text-slate-400 hover:bg-slate-200 hover:text-slate-700 transition-colors" title="Xuống">' +
+                '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>' +
+            '</button>' +
+            '<button type="button" class="btn-save-lib w-7 h-7 flex items-center justify-center rounded text-slate-400 hover:bg-amber-50 hover:text-amber-600 transition-colors" title="Lưu vào thư viện">' +
+                '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/></svg>' +
+            '</button>' +
+            '<button type="button" class="btn-del w-7 h-7 flex items-center justify-center rounded text-red-400 hover:bg-red-50 hover:text-red-600 transition-colors" title="Xóa">' +
+                '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>' +
+            '</button>';
+
+        // ── Body ──────────────────────────────────────────────────────────────
+        var body = document.createElement('div');
+        body.className = 'p-4 space-y-3';
+
+        // Meta row: CSS class + sort order
+        var rowMeta = document.createElement('div');
+        rowMeta.className = 'flex gap-3';
+        rowMeta.innerHTML =
+            '<div class="flex-1">' +
+                '<label class="block text-[11px] font-medium text-slate-500 mb-1">CSS Class</label>' +
+                '<input class="sec-css block w-full px-2 py-1.5 text-xs border border-slate-200 rounded-lg bg-white font-mono text-slate-700 focus:ring-1 focus:ring-blue-400 focus:outline-none"' +
+                '       value="' + esc(sec.cssClass || '') + '" placeholder="e.g. py-16 bg-white">' +
+            '</div>' +
+            '<div class="w-24 shrink-0">' +
+                '<label class="block text-[11px] font-medium text-slate-500 mb-1">Sort Order</label>' +
+                '<input type="number" class="sec-order block w-full px-2 py-1.5 text-xs border border-slate-200 rounded-lg bg-white text-right focus:ring-1 focus:ring-blue-400 focus:outline-none"' +
+                '       value="' + sec.sortOrder + '">' +
+            '</div>';
+        body.appendChild(rowMeta);
+
+        // Style panel
+        var stylePanel = buildStylePanel(sec);
+        body.appendChild(stylePanel);
+
+        // Editor area — differs by type
+        var editorArea = document.createElement('div');
+        editorArea.className = 'editor-area';
+
+        if (isCodeType(sec.sectionType)) {
+            var modeLabel = codeMode(sec.sectionType).toUpperCase();
+            editorArea.innerHTML =
+                '<label class="block text-[11px] font-medium text-slate-500 mb-1">' + modeLabel + ' Code</label>' +
+                '<textarea class="code-editor-ta"></textarea>';
+            var codeTa = editorArea.querySelector('.code-editor-ta');
+            // Load từ key theo loại (html/js/css) hoặc fallback "content" (seed / template dùng content)
+            var codeVal = (sec.data && (sec.data[codeKey(sec.sectionType)] || sec.data['content'])) || '';
+            if (codeTa) codeTa.value = codeVal;
+
+        } else if (isRichType(sec.sectionType)) {
+            editorArea.innerHTML =
+                '<label class="block text-[11px] font-medium text-slate-500 mb-1">Nội dung</label>' +
+                '<div class="rich-editor-host"></div>';
+
+        } else if (isComponentType(sec.sectionType)) {
+            buildComponentEditor(editorArea, sec, COMPONENT_FIELDS[sec.sectionType]);
+
+        } else if (isRepeatableType(sec.sectionType)) {
+            sec._rptCfg = REPEATABLE_COMPONENTS[sec.sectionType];
+
+        } else {
+            // Generic key-value fallback
+            var kvHeader = document.createElement('div');
+            kvHeader.className = 'flex items-center justify-between';
+            kvHeader.innerHTML =
+                '<span class="text-[11px] font-medium text-slate-500">Data (key – value)</span>' +
+                '<button type="button" class="btn-add-row text-[11px] font-medium text-blue-600 hover:text-blue-800">+ Thêm dòng</button>';
+            var kvRows = document.createElement('div');
+            kvRows.className = 'data-rows space-y-1.5 mt-1.5';
+            Object.keys(sec.data || {}).filter(function(k) { return k[0] !== '_'; }).forEach(function(k) {
+                kvRows.appendChild(makeDataRow(k, sec.data[k]));
+            });
+            editorArea.appendChild(kvHeader);
+            editorArea.appendChild(kvRows);
+        }
+
+        body.appendChild(editorArea);
+        card.appendChild(header);
+        card.appendChild(body);
+
+        // ── readCard: sync sec object from DOM ────────────────────────────────
+        function readCard() {
+            sec.sortOrder = parseInt(card.querySelector('.sec-order').value, 10) || 0;
+            sec.isVisible = card.querySelector('.sec-visible').checked;
+            sec.cssClass  = (card.querySelector('.sec-css').value || '').trim() || null;
+
+            if (isCodeType(sec.sectionType) && sec._cm) {
+                sec.data = {};
+                sec.data[codeKey(sec.sectionType)] = sec._cm.getValue();
+            } else if (isRichType(sec.sectionType) && sec._quill) {
+                sec.data = { content: sec._quill.root.innerHTML };
+            } else if (isComponentType(sec.sectionType)) {
+                sec.data = {};
+                card.querySelectorAll('.comp-field[data-key]').forEach(function(el) {
+                    var k = el.getAttribute('data-key');
+                    if (k) sec.data[k] = el.type === 'checkbox' ? (el.checked ? '1' : '') : el.value;
+                });
+            } else if (isRepeatableType(sec.sectionType)) {
+                readRepeatableData(card, sec, sec._rptCfg);
+            } else {
+                sec.data = {};
+                card.querySelectorAll('.data-row').forEach(function(row) {
+                    var k = row.querySelector('.dk').value.trim();
+                    var v = row.querySelector('.dv').value;
+                    if (k) sec.data[k] = v;
+                });
+            }
+
+            // Merge style fields into sec.data
+            readStyleFields(card, sec);
+            save();
+        }
+
+        // Wire style panel
+        wireStylePanel(stylePanel, readCard);
+
+        // Meta fields
+        card.querySelector('.sec-order').addEventListener('input', readCard);
+        card.querySelector('.sec-visible').addEventListener('change', readCard);
+        card.querySelector('.sec-css').addEventListener('input', readCard);
+
+        // Move / Delete
+        header.querySelector('.btn-up').addEventListener('click', function() {
+            if (idx > 0) { var t = sections[idx-1]; sections[idx-1] = sections[idx]; sections[idx] = t; render(); }
+        });
+        header.querySelector('.btn-down').addEventListener('click', function() {
+            if (idx < sections.length-1) { var t = sections[idx+1]; sections[idx+1] = sections[idx]; sections[idx] = t; render(); }
+        });
+        header.querySelector('.btn-del').addEventListener('click', function() {
+            if (confirm('Xóa section "' + sec.sectionType + '"?')) { destroyEditors(sec); sections.splice(idx, 1); render(); }
+        });
+        header.querySelector('.btn-save-lib').addEventListener('click', function() {
+            readCard(); // ensure sec.data is up-to-date
+            openSaveModal(sec);
+        });
+
+        // Static component fields
+        editorArea.querySelectorAll('.comp-field').forEach(function(el) {
+            el.addEventListener('input', readCard);
+            el.addEventListener('change', readCard);
+        });
+
+        // Repeatable component — build editor now that readCard is defined
+        if (isRepeatableType(sec.sectionType)) {
+            buildRepeatableEditor(editorArea, sec, sec._rptCfg, readCard);
+        }
+
+        // Key-value "add row" button (fallback)
+        var btnAddRow = editorArea.querySelector('.btn-add-row');
+        if (btnAddRow) {
+            var kvRowsEl = editorArea.querySelector('.data-rows');
+            btnAddRow.addEventListener('click', function() {
+                var r = makeDataRow('', '');
+                kvRowsEl.appendChild(r);
+                wireRow(r, readCard);
+                r.querySelector('.dk').focus();
+            });
+            kvRowsEl.querySelectorAll('.data-row').forEach(function(r) { wireRow(r, readCard); });
+        }
+
+        // Init CodeMirror
+        if (isCodeType(sec.sectionType) && window.CodeMirror) {
+            var ta = editorArea.querySelector('.code-editor-ta');
+            if (ta) {
+                sec._cm = CodeMirror.fromTextArea(ta, {
+                    mode: codeMode(sec.sectionType),
+                    lineNumbers: true,
+                    lineWrapping: true,
+                    tabSize: 2,
+                    indentWithTabs: false,
+                    extraKeys: { Tab: function(cm) { cm.replaceSelection('  '); } }
+                });
+                sec._cm.on('change', function() { readCard(); });
+            }
+        }
+
+        // Init Quill
+        if (isRichType(sec.sectionType) && window.Quill) {
+            var host = editorArea.querySelector('.rich-editor-host');
+            if (host) {
+                sec._quill = new Quill(host, {
+                    theme: 'snow',
+                    modules: {
+                        toolbar: [
+                            ['bold', 'italic', 'underline', 'strike'],
+                            [{ header: [1, 2, 3, false] }],
+                            [{ list: 'ordered' }, { list: 'bullet' }],
+                            ['blockquote', 'code-block'],
+                            ['link'],
+                            ['clean']
+                        ]
+                    }
+                });
+                var existingHtml = (sec.data && sec.data['content']) || '';
+                if (existingHtml) sec._quill.clipboard.dangerouslyPasteHTML(existingHtml);
+                sec._quill.on('text-change', function() { readCard(); });
+            }
+        }
+
+        return card;
+    }
+
+    // ── Key-value row helpers ─────────────────────────────────────────────────
+    function makeDataRow(k, v) {
+        var row = document.createElement('div');
+        row.className = 'data-row flex items-center gap-1.5';
+        row.innerHTML =
+            '<input class="dk w-32 shrink-0 px-2 py-1 text-xs border border-slate-200 rounded-lg bg-white font-mono text-slate-700 focus:ring-1 focus:ring-blue-400 focus:outline-none" value="' + esc(k) + '" placeholder="key">' +
+            '<input class="dv flex-1 px-2 py-1 text-xs border border-slate-200 rounded-lg bg-white text-slate-700 focus:ring-1 focus:ring-blue-400 focus:outline-none" value="' + esc(v) + '" placeholder="value">' +
+            '<button type="button" class="btn-del-row shrink-0 w-6 h-6 flex items-center justify-center rounded text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors">' +
+                '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>' +
+            '</button>';
+        return row;
+    }
+    function wireRow(row, readCard) {
+        row.querySelector('.dk').addEventListener('input', readCard);
+        row.querySelector('.dv').addEventListener('input', readCard);
+        row.querySelector('.btn-del-row').addEventListener('click', function() { row.remove(); readCard(); });
+    }
+
+    // ── "Add section" dropdown ────────────────────────────────────────────────
+    var btnAdd   = document.getElementById('btn-add-section');
+    var dropdown = document.getElementById('add-section-dropdown');
+
+    btnAdd.addEventListener('click', function(e) {
+        e.stopPropagation();
+        dropdown.classList.toggle('hidden');
+    });
+    document.addEventListener('click', function() {
+        dropdown.classList.add('hidden');
+        if (libDropdown) libDropdown.classList.add('hidden');
+    });
+
+    dropdown.querySelectorAll('.pick-type').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var type = btn.getAttribute('data-type');
+            dropdown.classList.add('hidden');
+            sections.push({ sectionType: type, sortOrder: sections.length, isVisible: true, cssClass: null, data: {} });
+            render();
+            container.lastElementChild && container.lastElementChild.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        });
+    });
+
+    // ── Library integration ───────────────────────────────────────────────────
+    var btnLib     = document.getElementById('btn-lib');
+    var libDropdown= document.getElementById('lib-dropdown');
+    var libItemsEl = document.getElementById('lib-items-list');
+    var _libCache  = null; // cache fetched templates
+
+    if (btnLib) {
+        btnLib.addEventListener('click', function(e) {
+            e.stopPropagation();
+            libDropdown.classList.toggle('hidden');
+            if (!libDropdown.classList.contains('hidden') && !_libCache) {
+                loadLibrary();
+            }
+        });
+    }
+
+    function loadLibrary() {
+        fetch('/admin/component-library/api/list')
+            .then(function(r) { return r.ok ? r.json() : Promise.reject(r.status); })
+            .then(function(templates) {
+                _libCache = templates;
+                renderLibraryList(templates);
+            })
+            .catch(function() {
+                libItemsEl.innerHTML = '<p class="px-3 py-2 text-xs text-red-500">Không thể tải thư viện.</p>';
+            });
+    }
+
+    function renderLibraryList(templates) {
+        if (!templates || templates.length === 0) {
+            libItemsEl.innerHTML = '<p class="px-3 py-2 text-xs text-slate-400">Thư viện trống. Lưu section để bắt đầu.</p>';
+            return;
+        }
+        // Group by type
+        var byType = {};
+        templates.forEach(function(t) {
+            if (!byType[t.sectionType]) byType[t.sectionType] = [];
+            byType[t.sectionType].push(t);
+        });
+        var html = '';
+        Object.keys(byType).sort().forEach(function(type) {
+            html += '<p class="px-3 pt-2 pb-0.5 text-[10px] font-semibold text-slate-400 uppercase">' + esc(type) + '</p>';
+            byType[type].forEach(function(t) {
+                html += '<button type="button" class="lib-pick-btn w-full text-left px-3 py-1.5 hover:bg-blue-50 text-xs text-slate-700 flex items-center gap-2" data-id="' + t.id + '">' +
+                    '<span class="w-1.5 h-1.5 rounded-full bg-violet-400 shrink-0"></span>' +
+                    '<span class="truncate flex-1">' + esc(t.name) + '</span>' +
+                    (t.description ? '<span class="text-slate-400 truncate text-[10px]">' + esc(t.description) + '</span>' : '') +
+                    '</button>';
+            });
+        });
+        libItemsEl.innerHTML = html;
+        libItemsEl.querySelectorAll('.lib-pick-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var id = parseInt(btn.getAttribute('data-id'));
+                var tpl = (_libCache || []).find(function(t) { return t.id === id; });
+                if (tpl) insertFromLibrary(tpl);
+                libDropdown.classList.add('hidden');
+            });
+        });
+    }
+
+    // Chuẩn hóa giá trị data thành string để tương thích backend (Dictionary<string, string>)
+    function normalizeDataToStrings(obj) {
+        if (!obj || typeof obj !== 'object') return {};
+        var out = {};
+        Object.keys(obj).forEach(function(k) {
+            var v = obj[k];
+            out[k] = (v === null || v === undefined) ? '' : String(v);
+        });
+        return out;
+    }
+
+    function insertFromLibrary(tpl) {
+        var data = {};
+        try { data = JSON.parse(tpl.dataJson || '{}'); } catch(e) {}
+        data = normalizeDataToStrings(data);
+        sections.push({
+            sectionType: tpl.sectionType,
+            sortOrder: sections.length,
+            isVisible: true,
+            cssClass: tpl.cssClass || null,
+            data: data
+        });
+        render();
+        container.lastElementChild && container.lastElementChild.scrollIntoView({ behavior:'smooth', block:'nearest' });
+    }
+
+    // ── "Save to Library" modal ───────────────────────────────────────────────
+    // Build once, reuse
+    var _saveModal = null;
+    function ensureSaveModal() {
+        if (_saveModal) return _saveModal;
+        var modal = document.createElement('div');
+        modal.id = 'save-lib-modal';
+        modal.className = 'fixed inset-0 bg-slate-900/50 flex items-center justify-center z-50 hidden';
+        modal.innerHTML =
+            '<div class="bg-white rounded-2xl shadow-xl w-80 p-5">' +
+                '<h3 class="text-sm font-semibold text-slate-800 mb-3">💾 Lưu vào thư viện</h3>' +
+                '<label class="block text-[13px] font-medium text-slate-600 mb-1.5">Tên template</label>' +
+                '<input id="save-lib-name" type="text" class="block w-full px-3 py-2.5 text-sm bg-white border border-slate-200 rounded-xl text-slate-900 focus:ring-2 focus:ring-blue-500 focus:outline-none mb-4" placeholder="e.g. Hero trang chủ">' +
+                '<div id="save-lib-msg" class="text-xs mb-3 hidden"></div>' +
+                '<div class="flex gap-2">' +
+                    '<button id="save-lib-confirm" type="button" class="flex-1 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-colors">Lưu</button>' +
+                    '<button id="save-lib-cancel" type="button" class="px-4 py-2 text-sm font-medium text-slate-600 bg-slate-100 rounded-xl hover:bg-slate-200 transition-colors">Hủy</button>' +
+                '</div>' +
+            '</div>';
+        document.body.appendChild(modal);
+        modal.querySelector('#save-lib-cancel').addEventListener('click', function() { modal.classList.add('hidden'); });
+        modal.addEventListener('click', function(e) { if (e.target === modal) modal.classList.add('hidden'); });
+        _saveModal = modal;
+        return modal;
+    }
+
+    function openSaveModal(sec) {
+        var modal = ensureSaveModal();
+        var nameInput = modal.querySelector('#save-lib-name');
+        var msgEl     = modal.querySelector('#save-lib-msg');
+        var confirmBtn= modal.querySelector('#save-lib-confirm');
+        nameInput.value = sec.sectionType;
+        msgEl.className = 'text-xs mb-3 hidden';
+        msgEl.textContent = '';
+        modal.classList.remove('hidden');
+        nameInput.focus();
+        nameInput.select();
+        // Remove previous listener by cloning
+        var newConfirm = confirmBtn.cloneNode(true);
+        confirmBtn.parentNode.replaceChild(newConfirm, confirmBtn);
+        newConfirm.addEventListener('click', function() {
+            var name = nameInput.value.trim();
+            if (!name) { nameInput.focus(); return; }
+            newConfirm.disabled = true; newConfirm.textContent = 'Đang lưu...';
+            var payload = {
+                Name: name,
+                SectionType: sec.sectionType,
+                DataJson: JSON.stringify(sec.data || {}),
+                CssClass: sec.cssClass || ''
+            };
+            var fd = new FormData();
+            Object.keys(payload).forEach(function(k) { fd.append(k, payload[k]); });
+            fd.append('__RequestVerificationToken', csrfToken());
+            fetch('/admin/component-library/create', {
+                method: 'POST',
+                headers: { 'Accept': 'application/json' },
+                body: fd
+            })
+            .then(function(r) { return r.ok ? r.json() : Promise.reject(r.status); })
+            .then(function() {
+                _libCache = null; // invalidate cache
+                modal.classList.add('hidden');
+                showToast('✅ Đã lưu "' + esc(name) + '" vào thư viện.');
+            })
+            .catch(function() {
+                newConfirm.disabled = false; newConfirm.textContent = 'Lưu';
+                msgEl.textContent = 'Lưu thất bại. Vui lòng thử lại.';
+                msgEl.className = 'text-xs mb-3 text-red-500';
+            });
+        });
+    }
+
+    // ── Image picker (media library) ─────────────────────────────────────────
+    var _pickerCache = null;
+    var _pickerCb    = null;
+    var _pickerInput = null;
+
+    function ensurePickerModal() {
+        var existing = document.getElementById('img-picker-modal');
+        if (existing) return existing;
+
+        var modal = document.createElement('div');
+        modal.id = 'img-picker-modal';
+        modal.innerHTML =
+            '<div id="img-picker-inner">' +
+                '<div class="flex items-center justify-between px-4 py-3 border-b border-slate-100">' +
+                    '<h3 class="text-sm font-semibold text-slate-700">📚 Chọn ảnh từ thư viện</h3>' +
+                    '<div class="flex items-center gap-2">' +
+                        '<input id="img-picker-search" type="text" placeholder="Tìm theo tên..." class="text-xs border border-slate-200 rounded-lg px-3 py-1.5 w-44 focus:outline-none focus:ring-2 focus:ring-blue-400"/>' +
+                        '<a href="/admin/media-library" target="_blank" class="text-xs text-blue-600 hover:underline whitespace-nowrap">Quản lý ↗</a>' +
+                        '<button id="img-picker-close" class="ml-1 text-slate-400 hover:text-slate-600 text-lg leading-none">&times;</button>' +
+                    '</div>' +
+                '</div>' +
+                '<div id="img-picker-grid"><p class="text-center text-xs text-slate-400 py-8">Đang tải...</p></div>' +
+                '<div id="img-picker-empty" style="display:none" class="text-center text-xs text-slate-400 py-8">Không tìm thấy ảnh.</div>' +
+            '</div>';
+
+        document.body.appendChild(modal);
+
+        // Close on backdrop click
+        modal.addEventListener('click', function(e) { if (e.target === modal) closePickerModal(); });
+        modal.querySelector('#img-picker-close').addEventListener('click', closePickerModal);
+
+        // Search
+        modal.querySelector('#img-picker-search').addEventListener('input', function() {
+            var q = this.value.trim().toLowerCase();
+            var items = modal.querySelectorAll('.picker-item');
+            var shown = 0;
+            items.forEach(function(it) {
+                var match = !q || it.dataset.name.includes(q);
+                it.style.display = match ? '' : 'none';
+                if (match) shown++;
+            });
+            modal.querySelector('#img-picker-empty').style.display = (shown === 0 && q) ? 'flex' : 'none';
+        });
+
+        return modal;
+    }
+
+    function openImagePicker(inputEl, onChangeCb) {
+        _pickerInput = inputEl;
+        _pickerCb    = onChangeCb;
+        var modal = ensurePickerModal();
+        modal.classList.add('open');
+        document.body.style.overflow = 'hidden';
+
+        // Keyboard close
+        document.addEventListener('keydown', onPickerKey);
+
+        if (_pickerCache) {
+            renderPickerItems(modal, _pickerCache);
+            return;
+        }
+
+        fetch('/admin/media-library/api/list', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+            .then(function(r) { return r.json(); })
+            .then(function(list) {
+                _pickerCache = list;
+                renderPickerItems(modal, list);
+            })
+            .catch(function() {
+                modal.querySelector('#img-picker-grid').innerHTML =
+                    '<p class="text-center text-xs text-red-400 py-8">Tải thư viện thất bại.</p>';
+            });
+    }
+
+    function renderPickerItems(modal, list) {
+        var grid = modal.querySelector('#img-picker-grid');
+        if (!list || !list.length) {
+            grid.innerHTML = '<p class="text-center text-xs text-slate-400 py-8">Thư viện trống. Hãy upload ảnh trước.</p>';
+            return;
+        }
+        grid.innerHTML = '';
+        list.forEach(function(f) {
+            var div = document.createElement('div');
+            div.className = 'picker-item';
+            div.dataset.name = (f.fileName || '').toLowerCase();
+            div.innerHTML =
+                '<img src="' + esc(f.url) + '" alt="' + esc(f.altText || f.fileName || '') + '" loading="lazy" onerror="this.src=\'/img/placeholder.svg\'">' +
+                '<div class="picker-name">' + esc(f.fileName || '') + '</div>';
+            div.addEventListener('click', function() {
+                if (_pickerInput) {
+                    _pickerInput.value = f.url;
+                    _pickerInput.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+                if (_pickerCb) _pickerCb();
+                closePickerModal();
+            });
+            grid.appendChild(div);
+        });
+    }
+
+    function closePickerModal() {
+        var modal = document.getElementById('img-picker-modal');
+        if (modal) modal.classList.remove('open');
+        document.body.style.overflow = '';
+        document.removeEventListener('keydown', onPickerKey);
+        _pickerInput = null;
+        _pickerCb    = null;
+    }
+
+    function onPickerKey(e) { if (e.key === 'Escape') closePickerModal(); }
+
+    // Toast notification
+    function showToast(msg) {
+        var t = document.createElement('div');
+        t.className = 'fixed bottom-5 right-5 z-50 px-4 py-2.5 bg-slate-800 text-white text-sm rounded-xl shadow-lg transition-opacity';
+        t.textContent = msg;
+        document.body.appendChild(t);
+        setTimeout(function() { t.style.opacity = '0'; setTimeout(function() { t.remove(); }, 300); }, 2500);
+    }
+
+    // ── Sync on submit ────────────────────────────────────────────────────────
+    document.getElementById('page-form').addEventListener('submit', function() { save(); });
+
+    // ── Bootstrap from server JSON ────────────────────────────────────────────
+    if (typeof window.__pageSectionsFromServer !== 'undefined' && Array.isArray(window.__pageSectionsFromServer) && window.__pageSectionsFromServer.length > 0) {
+        sections = window.__pageSectionsFromServer;
+    } else {
+        try { sections = JSON.parse(jsonInput.value || '[]'); } catch(e) { sections = []; }
+    }
+    render();
+
+}());
+</script>
+}

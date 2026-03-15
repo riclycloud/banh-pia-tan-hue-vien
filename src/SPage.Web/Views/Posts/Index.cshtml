@@ -1,0 +1,122 @@
+@using SPage.Application.Common.Models
+@using SPage.Application.Features.Categories.DTOs
+@using SPage.Application.Features.Posts.DTOs
+@model PaginatedResult<PostSummaryDto>
+@{
+    ViewData["Title"] = SharedLocalizer["Posts_PageTitle"].Value;
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var category = ViewBag.Category as CategoryDetailDto;
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages.css" asp-append-version="true" />
+}
+
+<div class="hd-container public-page">
+    <header class="public-page__header">
+        @if (category != null)
+        {
+            <nav class="public-page__breadcrumb" aria-label="Breadcrumb">
+                <a asp-controller="Posts" asp-action="Index">@SharedLocalizer["Posts_Heading"]</a>
+                <span class="public-page__breadcrumb-sep" aria-hidden="true">/</span>
+                <span class="public-page__breadcrumb-current" aria-current="page">@category.Name</span>
+            </nav>
+            <h1 class="public-page__title public-page__title--accent">@category.Name</h1>
+            @if (!string.IsNullOrWhiteSpace(category.Description))
+            {
+                <p class="public-page__subtitle">@category.Description</p>
+            }
+        }
+        else
+        {
+            <h1 class="public-page__title public-page__title--accent">@SharedLocalizer["Posts_Heading"]</h1>
+        }
+    </header>
+
+    <div class="posts-grid">
+    @foreach (var post in Model.Items)
+    {
+        <article class="post-card" itemscope itemtype="https://schema.org/@post.SchemaType">
+            @if (!string.IsNullOrEmpty(post.FeaturedImageUrl))
+            {
+                <a href="/@post.Slug">
+                    <img src="@post.FeaturedImageUrl"
+                         alt="@post.FeaturedImageAlt"
+                         loading="lazy"
+                         width="800" height="450"
+                         itemprop="image" />
+                </a>
+            }
+
+            <div class="post-card__content">
+                @* ★ H2 cho card listing *@
+                <h2 class="post-card__title" itemprop="headline">
+                    <a href="/@post.Slug" itemprop="url">@post.Title</a>
+                </h2>
+
+                <div class="post-card__meta">
+                    <a href="/@post.CategorySlug" class="post-card__category">@post.CategoryName</a>
+                    <time datetime="@post.PublishedAt?.ToString("O")" itemprop="datePublished">
+                        @post.PublishedAt?.ToString("dd/MM/yyyy")
+                    </time>
+                </div>
+
+                @if (!string.IsNullOrEmpty(post.Excerpt))
+                {
+                    <p class="post-card__excerpt" itemprop="description">@post.Excerpt</p>
+                }
+
+                <div class="post-card__tags">
+                    @foreach (var tag in post.Tags)
+                    {
+                        <a asp-controller="Posts" asp-action="Index"
+                           asp-route-tag="@tag"
+                           class="tag">#@tag</a>
+                    }
+                </div>
+            </div>
+        </article>
+    }
+</div>
+
+@* ★ Pagination chuẩn SEO — rel="prev/next" *@
+@if (Model.TotalPages > 1)
+{
+    <nav class="pagination" aria-label="@SharedLocalizer["Pagination_Label"]">
+        @if (Model.HasPreviousPage)
+        {
+            <a asp-action="Index" asp-route-page="@(Model.Page - 1)"
+               asp-route-category="@Context.Request.Query["category"]"
+               asp-route-tag="@Context.Request.Query["tag"]"
+               rel="prev" class="pagination__prev">
+                &laquo; @SharedLocalizer["Pagination_Prev"]
+            </a>
+        }
+
+        @for (var i = Math.Max(1, Model.Page - 2); i <= Math.Min(Model.TotalPages, Model.Page + 2); i++)
+        {
+            if (i == Model.Page)
+            {
+                <span class="pagination__page active" aria-current="page">@i</span>
+            }
+            else
+            {
+                <a asp-action="Index" asp-route-page="@i"
+                   asp-route-category="@Context.Request.Query["category"]"
+                   asp-route-tag="@Context.Request.Query["tag"]"
+                   class="pagination__page">@i</a>
+            }
+        }
+
+        @if (Model.HasNextPage)
+        {
+            <a asp-action="Index" asp-route-page="@(Model.Page + 1)"
+               asp-route-category="@Context.Request.Query["category"]"
+               asp-route-tag="@Context.Request.Query["tag"]"
+               rel="next" class="pagination__next">
+                @SharedLocalizer["Pagination_Next"] &raquo;
+            </a>
+        }
+    </nav>
+}
+</div>

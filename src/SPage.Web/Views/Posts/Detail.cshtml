@@ -1,0 +1,79 @@
+@using SPage.Application.Features.Posts.DTOs
+@model PostDetailDto
+@{
+    ViewData["Title"] = Model.MetaTitle;
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages.css" asp-append-version="true" />
+}
+
+<div class="hd-container">
+<article itemscope itemtype="https://schema.org/@Model.SchemaType" class="post-detail public-page">
+
+    @* Breadcrumb Schema.org *@
+    <nav aria-label="breadcrumb" itemscope itemtype="https://schema.org/BreadcrumbList">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                <a itemprop="item" asp-controller="Home" asp-action="Index">
+                    <span itemprop="name">@SharedLocalizer["Home"]</span>
+                </a>
+                <meta itemprop="position" content="1" />
+            </li>
+            <li class="breadcrumb-item" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                <a itemprop="item" asp-controller="Posts" asp-action="Index">
+                    <span itemprop="name">@SharedLocalizer["Nav_Blog"]</span>
+                </a>
+                <meta itemprop="position" content="2" />
+            </li>
+            <li class="breadcrumb-item active" aria-current="page"
+                itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                <span itemprop="name">@Model.Title</span>
+                <meta itemprop="position" content="3" />
+            </li>
+        </ol>
+    </nav>
+
+    @* ★ H1 — duy nhất 1 H1 *@
+    <h1 class="post-detail__title" itemprop="headline">@Model.Title</h1>
+
+    <div class="post-detail__meta">
+        <span itemprop="author" itemscope itemtype="https://schema.org/Person">
+            <span itemprop="name">@Model.CreatedBy</span>
+        </span>
+        <time datetime="@Model.PublishedAt?.ToString("O")" itemprop="datePublished">
+            @Model.PublishedAt?.ToString("dd/MM/yyyy")
+        </time>
+        <a href="/@Model.CategorySlug">@Model.CategoryName</a>
+    </div>
+
+    @if (!string.IsNullOrEmpty(Model.FeaturedImageUrl))
+    {
+        <figure class="post-detail__featured-image">
+            <img src="@Model.FeaturedImageUrl"
+                 alt="@Model.FeaturedImageAlt"
+                 width="1200" height="630"
+                 loading="eager"
+                 fetchpriority="high"
+                 itemprop="image" />
+        </figure>
+    }
+
+    @* ★ Nội dung bài viết *@
+    <div class="post-detail__content prose" itemprop="articleBody">
+        @Html.Raw(Model.Content)
+    </div>
+
+    <footer class="post-detail__footer">
+        <div class="post-detail__tags">
+            @foreach (var tag in Model.Tags)
+            {
+                <a asp-controller="Posts" asp-action="Index" asp-route-tag="@tag"
+                   class="tag" rel="tag">#@tag</a>
+            }
+        </div>
+    </footer>
+
+</article>
+</div>

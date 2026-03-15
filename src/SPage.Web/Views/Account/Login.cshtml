@@ -1,0 +1,268 @@
+@model SPage.Controllers.LoginViewModel
+@{
+    Layout = null;
+    ViewData["Title"] = "Đăng nhập Admin";
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] — SPage</title>
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f7ff',
+                            100: '#e0effe',
+                            200: '#bae0fd',
+                            300: '#7cc8fb',
+                            400: '#36aaf5',
+                            500: '#0c8ee6',
+                            600: '#0070c4',
+                            700: '#01599f',
+                            800: '#064b82',
+                            900: '#0b3f6c',
+                            950: '#072849'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['DM Sans', 'system-ui', 'sans-serif'],
+                        display: ['Outfit', 'system-ui', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        :root {
+            --input-bg: rgba(255, 255, 255, 0.08);
+            --input-border: rgba(255, 255, 255, 0.15);
+            --input-focus: #3b82f6;
+            --text-muted: #94a3b8;
+            --text-primary: #f1f5f9;
+        }
+        html, body {
+            font-family: 'DM Sans', system-ui, sans-serif;
+            min-height: 100vh;
+            background-color: #0f172a !important;
+            color: #f1f5f9 !important;
+        }
+        .font-display { font-family: 'Outfit', system-ui, sans-serif; }
+        .input-field {
+            background: var(--input-bg);
+            border: 1px solid var(--input-border);
+            color: #f1f5f9;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .input-field::placeholder { color: #64748b; }
+        .input-field:hover { border-color: rgba(255, 255, 255, 0.25); }
+        .input-field:focus {
+            outline: none;
+            border-color: var(--input-focus);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+        }
+        .btn-primary {
+            background: linear-gradient(180deg, #3b82f6 0%, #2563eb 100%);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2), 0 4px 12px rgba(59, 130, 246, 0.35);
+        }
+        .btn-primary:hover {
+            background: linear-gradient(180deg, #60a5fa 0%, #3b82f6 100%);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2), 0 6px 16px rgba(59, 130, 246, 0.4);
+        }
+        .btn-primary:active { transform: scale(0.99); }
+        .panel-left {
+            background: linear-gradient(165deg, #020617 0%, #0f172a 50%, #1e293b 100%);
+        }
+        .grid-pattern {
+            background-image:
+                linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+            background-size: 48px 48px;
+        }
+        .checkbox-custom {
+            accent-color: #3b82f6;
+        }
+        @@keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-in { animation: fadeInUp 0.4s ease-out forwards; }
+        .animate-in-1 { animation-delay: 0.05s; opacity: 0; }
+        .animate-in-2 { animation-delay: 0.1s; opacity: 0; }
+        .animate-in-3 { animation-delay: 0.15s; opacity: 0; }
+        .animate-in-4 { animation-delay: 0.2s; opacity: 0; }
+        .animate-in-5 { animation-delay: 0.25s; opacity: 0; }
+        .animate-in-6 { animation-delay: 0.3s; opacity: 0; }
+        /* Theme tối: nền tối, chữ sáng */
+        .login-form-panel {
+            background-color: #0f172a !important;
+            color: #f1f5f9 !important;
+        }
+        .login-form-panel h1,
+        .login-form-panel .form-title,
+        .login-form-panel label,
+        .login-form-panel p,
+        .login-form-panel span { color: #f1f5f9 !important; }
+        #errorSummary,
+        .login-form-panel span[class*="red"],
+        .login-form-panel .field-validation-error { color: #fca5a5 !important; }
+        .login-form-panel .form-subtitle,
+        .login-form-panel .footer-muted,
+        .login-form-panel .remember-label { color: #94a3b8 !important; }
+        .login-form-panel .mobile-logo-text { color: #f1f5f9 !important; }
+        .login-form-panel input[type="email"],
+        .login-form-panel input[type="password"] {
+            background-color: rgba(255, 255, 255, 0.08) !important;
+            border: 1px solid rgba(255, 255, 255, 0.15) !important;
+            color: #f1f5f9 !important;
+        }
+        .login-form-panel input::placeholder { color: #64748b !important; }
+        .login-form-panel .btn-primary,
+        .login-form-panel .btn-primary * { color: #ffffff !important; }
+        #errorSummary { background-color: rgba(185, 28, 28, 0.2) !important; border-color: rgba(248, 113, 113, 0.4) !important; }
+        #errorSummary * { color: #fca5a5 !important; }
+    </style>
+</head>
+<body class="min-h-screen bg-slate-900 text-slate-100 antialiased flex">
+
+    @* Left panel — branding *@
+    <div class="panel-left grid-pattern hidden lg:flex lg:w-[52%] min-h-screen flex-col justify-between p-12 xl:p-16">
+        <div>
+            <div class="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-white/10 backdrop-blur-sm mb-8">
+                <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 18" aria-hidden="true">
+                    <path d="M18 0H2a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2Zm-5.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Zm4.376 10.481A1 1 0 0 1 16 15H4a1 1 0 0 1-.895-1.447l3.5-7A1 1 0 0 1 7.468 6a.965.965 0 0 1 .9.5l2.775 4.757 1.546-1.887a1 1 0 0 1 1.618.1l2.541 4a1 1 0 0 1 .028 1.011Z"/>
+                </svg>
+            </div>
+            <h2 class="font-display text-3xl xl:text-4xl font-semibold text-white tracking-tight max-w-md">
+                Quản trị nội dung chuyên nghiệp với SPage
+            </h2>
+            <p class="mt-4 text-slate-300 text-base max-w-sm leading-relaxed">
+                Đăng nhập vào khu vực quản trị để chỉnh sửa trang, sản phẩm và cài đặt hệ thống.
+            </p>
+        </div>
+        <div class="text-slate-400 text-sm">
+            SPage CMS &copy; @DateTime.Now.Year
+        </div>
+    </div>
+
+    @* Right panel — form (nền tối, chữ sáng) *@
+    <div class="login-form-panel w-full lg:w-[48%] min-h-screen flex items-center justify-center px-6 py-12 sm:px-10">
+        <div class="w-full max-w-[400px]">
+            @* Mobile logo *@
+            <div class="lg:hidden text-center mb-8">
+                <div class="inline-flex items-center justify-center w-11 h-11 rounded-xl bg-brand-600 text-white mb-3">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 18"><path d="M18 0H2a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2Zm-5.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Zm4.376 10.481A1 1 0 0 1 16 15H4a1 1 0 0 1-.895-1.447l3.5-7A1 1 0 0 1 7.468 6a.965.965 0 0 1 .9.5l2.775 4.757 1.546-1.887a1 1 0 0 1 1.618.1l2.541 4a1 1 0 0 1 .028 1.011Z"/></svg>
+                </div>
+                <span class="mobile-logo-text font-display font-semibold text-xl text-slate-100">SPage Admin</span>
+            </div>
+
+            <div class="animate-in">
+                <h1 class="form-title font-display text-2xl sm:text-3xl font-semibold text-slate-100 animate-in animate-in-1">Đăng nhập</h1>
+                <p class="form-subtitle mt-1.5 text-slate-400 text-sm animate-in animate-in-2">Nhập thông tin tài khoản quản trị</p>
+            </div>
+
+            <form id="loginForm" asp-controller="Account"
+                  asp-action="Login"
+                  asp-route-returnUrl="@ViewData["ReturnUrl"]"
+                  method="post"
+                  class="mt-8 space-y-5">
+                @Html.AntiForgeryToken()
+
+                <div id="errorSummary" class="hidden animate-in animate-in-3 px-4 py-3 text-sm text-red-300 bg-red-900/30 border border-red-500/30 rounded-xl" role="alert">
+                </div>
+
+                <div class="animate-in animate-in-4">
+                    <label asp-for="Email" class="block text-sm font-medium text-slate-300 mb-1.5">Email</label>
+                    <input asp-for="Email" type="email" autocomplete="email" autofocus
+                           class="input-field block w-full px-4 py-3 text-[15px] rounded-xl" placeholder="admin@example.com" />
+                    <span asp-validation-for="Email" class="text-xs text-red-400 mt-1 block"></span>
+                </div>
+
+                <div class="animate-in animate-in-5">
+                    <label asp-for="Password" class="block text-sm font-medium text-slate-300 mb-1.5">Mật khẩu</label>
+                    <input asp-for="Password" type="password" autocomplete="current-password"
+                           class="input-field block w-full px-4 py-3 text-[15px] rounded-xl" placeholder="••••••••" />
+                    <span asp-validation-for="Password" class="text-xs text-red-400 mt-1 block"></span>
+                </div>
+
+                <div class="flex items-center animate-in animate-in-6">
+                    <input asp-for="RememberMe" type="checkbox" id="remember-check"
+                           class="checkbox-custom w-4 h-4 rounded border-slate-500 text-blue-500 focus:ring-blue-500" />
+                    <label asp-for="RememberMe" class="remember-label ml-2.5 text-sm text-slate-400 cursor-pointer select-none">
+                        Ghi nhớ đăng nhập
+                    </label>
+                </div>
+
+                <button type="submit" id="submitBtn"
+                        class="btn-primary w-full py-3 text-[15px] font-semibold text-white rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-900">
+                    Đăng nhập
+                </button>
+            </form>
+
+            <p class="footer-muted lg:hidden text-center text-xs text-slate-500 mt-8">SPage CMS &copy; @DateTime.Now.Year</p>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const form = e.target;
+            const btn = document.getElementById('submitBtn');
+            const errDiv = document.getElementById('errorSummary');
+
+            document.querySelectorAll('span.text-red-600, span.text-red-400').forEach(el => el.innerHTML = '');
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="inline-flex items-center justify-center gap-2"><svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Đang xử lý...</span>';
+            errDiv.classList.add('hidden');
+            errDiv.innerHTML = '';
+
+            try {
+                const formData = new FormData(form);
+                const data = new URLSearchParams();
+                for (const pair of formData) { data.append(pair[0], pair[1]); }
+
+                const response = await fetch(form.action, {
+                    method: 'POST',
+                    body: data,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    }
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.success) {
+                        window.location.href = result.redirectUrl;
+                    } else {
+                        errDiv.innerHTML = result.message || 'Đăng nhập thất bại.';
+                        errDiv.classList.remove('hidden');
+                        btn.disabled = false;
+                        btn.innerHTML = 'Đăng nhập';
+                    }
+                } else {
+                    errDiv.innerHTML = 'Lỗi kết nối máy chủ.';
+                    errDiv.classList.remove('hidden');
+                    btn.disabled = false;
+                    btn.innerHTML = 'Đăng nhập';
+                }
+            } catch (error) {
+                errDiv.innerHTML = 'Lỗi không xác định.';
+                errDiv.classList.remove('hidden');
+                btn.disabled = false;
+                btn.innerHTML = 'Đăng nhập';
+            }
+        });
+    </script>
+</body>
+</html>

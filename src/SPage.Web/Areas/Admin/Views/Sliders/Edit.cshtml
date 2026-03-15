@@ -1,0 +1,44 @@
+@using SPage.Domain.Entities.Content
+@model Slider
+@{
+ ViewData["Title"] = Model.Id == 0 ? "Thêm slider" : "Sửa slider";
+}
+
+<h2 class="text-xl font-bold text-gray-800 mb-4">
+ @ViewData["Title"]
+</h2>
+
+<form asp-action="Edit" method="post" class="space-y-4 max-w-xl">
+ @Html.AntiForgeryToken()
+
+ <input type="hidden" asp-for="Id" />
+
+ <div>
+ <label asp-for="Name" class="block mb-1 text-sm font-medium text-gray-700 ">Tên slider</label>
+ <input asp-for="Name" class="block w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg " />
+ <span asp-validation-for="Name" class="text-sm text-red-600"></span>
+ </div>
+
+ <div>
+ <label asp-for="Position" class="block mb-1 text-sm font-medium text-gray-700 ">Vị trí</label>
+ <select asp-for="Position" class="block w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg "
+ asp-items="Html.GetEnumSelectList<SliderPosition>()"></select>
+ </div>
+
+ <div class="flex items-center gap-2 mt-2">
+ <input asp-for="IsActive" type="checkbox" class="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500" />
+ <label asp-for="IsActive" class="text-sm text-gray-700 ">Hiển thị</label>
+ </div>
+
+ <div class="flex items-center gap-3 pt-2">
+ <button type="submit" class="px-4 py-2 text-sm text-white bg-primary-600 rounded-lg hover:bg-primary-700">
+ Lưu
+ </button>
+ <a asp-action="Index" class="text-sm text-gray-600 hover:underline ">Hủy</a>
+ </div>
+</form>
+
+@section Scripts {
+ <partial name="_ValidationScriptsPartial" />
+}
+

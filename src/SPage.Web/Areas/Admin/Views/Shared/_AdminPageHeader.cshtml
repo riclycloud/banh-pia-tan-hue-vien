@@ -1,0 +1,18 @@
+@* Header chuẩn Admin: set ViewData["AdminTitle"], ViewData["AdminSubtitle"]; nút thêm đặt trong section AdminAction hoặc tự render. *@
+@{
+    var title = ViewData["AdminTitle"]?.ToString() ?? ViewData["Title"]?.ToString() ?? "Admin";
+    var subtitle = ViewData["AdminSubtitle"]?.ToString();
+}
+<div class="flex items-center justify-between mb-5">
+    <div>
+        <h1 class="text-xl font-bold text-slate-800">@title</h1>
+        @if (!string.IsNullOrWhiteSpace(subtitle))
+        {
+            <p class="text-sm text-slate-500 mt-0.5">@subtitle</p>
+        }
+    </div>
+    @if (IsSectionDefined("AdminAction"))
+    {
+        @await RenderSectionAsync("AdminAction", required: false)
+    }
+</div>

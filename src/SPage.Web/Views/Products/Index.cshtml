@@ -1,0 +1,173 @@
+@using SPage.Application.Common.Models
+@using SPage.Application.Features.Products.DTOs
+@model PaginatedResult<ProductSummaryDto>
+@{
+    var seo = ViewData["Seo"] as SPage.ViewModels.Seo.SeoViewModel;
+    ViewData["Title"] = seo?.Title ?? "Sản phẩm";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages.css" asp-append-version="true" />
+}
+
+<div class="hd-container public-page">
+    <header class="public-page__header d-flex flex-wrap align-items-end justify-content-between gap-3">
+        <div>
+            <h1 class="public-page__title public-page__title--accent">Sản phẩm</h1>
+            <p class="public-page__subtitle mb-0">@Model.TotalCount kết quả</p>
+        </div>
+    </header>
+
+    @* ── Filter bar ───────────────────────────────────────────────── *@
+    <form method="get" class="row g-2 mb-4">
+    @if (!string.IsNullOrEmpty(Context.Request.Query["categorySlug"]))
+    {
+        <input type="hidden" name="categorySlug" value="@Context.Request.Query["categorySlug"]" />
+    }
+    <div class="col-sm-auto flex-grow-1">
+        <input type="text" name="q" value="@Context.Request.Query["q"]"
+               placeholder="Tìm sản phẩm..."
+               class="form-control form-control-sm" />
+    </div>
+    <div class="col-sm-auto">
+        <select name="sort" class="form-select form-select-sm">
+            <option value="newest" selected="@(Context.Request.Query["sort"] == "newest")">Mới nhất</option>
+            <option value="price_asc" selected="@(Context.Request.Query["sort"] == "price_asc")">Giá tăng dần</option>
+            <option value="price_desc" selected="@(Context.Request.Query["sort"] == "price_desc")">Giá giảm dần</option>
+        </select>
+    </div>
+    <div class="col-sm-auto">
+        <button type="submit" class="btn btn-sm btn-outline-primary">Lọc</button>
+    </div>
+</form>
+
+@* ── Product grid ─────────────────────────────────────────────── *@
+@if (Model.Items.Any())
+{
+    <div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 g-4"
+         itemscope itemtype="https://schema.org/ItemList">
+
+        @foreach (var (product, i) in Model.Items.Select((p, idx) => (p, idx)))
+        {
+            <div class="col" itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+                <meta itemprop="position" content="@(i + 1)" />
+                <article class="card h-100 shadow-sm border-0"
+                         itemscope itemtype="https://schema.org/Product">
+                    @* Product image *@
+                    <a href="/@(product.CategorySlug ?? "san-pham")/@product.Slug"
+                       class="d-block overflow-hidden" style="aspect-ratio:1/1"
+                       itemprop="url">
+                        @if (product.PrimaryImageUrl is not null)
+                        {
+                            <img src="@product.PrimaryImageUrl"
+                                 alt="@(product.PrimaryImageAlt ?? product.Name)"
+                                 class="card-img-top w-100 h-100 object-fit-cover"
+                                 loading="lazy" decoding="async"
+                                 itemprop="image" />
+                        }
+                        else
+                        {
+                            <div class="w-100 h-100 bg-light d-flex align-items-center justify-content-center text-muted">
+                                <svg width="48" height="48" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M17 5.923A1 1 0 0 0 16 5h-3V4a4 4 0 1 0-8 0v1H2a1 1 0 0 0-1 .923L.086 17.846A2 2 0 0 0 2.08 20h13.84a2 2 0 0 0 1.994-2.153L17 5.923Z"/>
+                                </svg>
+                            </div>
+                        }
+                    </a>
+
+                    <div class="card-body d-flex flex-column p-3">
+                        <h2 class="card-title fs-6 mb-1" itemprop="name">
+                            <a href="/@(product.CategorySlug ?? "san-pham")/@product.Slug" class="text-decoration-none text-dark stretched-link">
+                                @product.Name
+                            </a>
+                        </h2>
+
+                        @if (product.ShortDescription is not null)
+                        {
+                            <p class="card-text text-muted small mb-2 flex-grow-1 lh-sm">
+                                @product.ShortDescription
+                            </p>
+                        }
+                        else
+                        {
+                            <div class="flex-grow-1"></div>
+                        }
+
+                        @* Price — Schema.org Offer *@
+                        <div itemprop="offers" itemscope itemtype="https://schema.org/Offer">
+                            <meta itemprop="priceCurrency" content="VND" />
+                            @if (product.SalePrice.HasValue && product.SalePrice < product.Price)
+                            {
+                                <meta itemprop="price" content="@product.SalePrice" />
+                                <div class="d-flex align-items-baseline gap-2">
+                                    <span class="fw-semibold text-danger">
+                                        @product.SalePrice.Value.ToString("N0") đ
+                                    </span>
+                                    <small class="text-muted text-decoration-line-through">
+                                        @product.Price.ToString("N0") đ
+                                    </small>
+                                </div>
+                            }
+                            else
+                            {
+                                <meta itemprop="price" content="@product.Price" />
+                                <span class="fw-semibold">@product.Price.ToString("N0") đ</span>
+                            }
+                        </div>
+                    </div>
+                </article>
+            </div>
+        }
+    </div>
+
+    @* ── Pagination ───────────────────────────────────────────── *@
+    @if (Model.TotalPages > 1)
+    {
+        <nav aria-label="Phân trang sản phẩm" class="mt-5 d-flex justify-content-center">
+            <ul class="pagination pagination-sm">
+                @if (Model.HasPreviousPage)
+                {
+                    <li class="page-item">
+                        <a class="page-link" asp-action="Index"
+                           asp-route-page="@(Model.Page - 1)"
+                           asp-route-q="@Context.Request.Query["q"]"
+                           asp-route-sort="@Context.Request.Query["sort"]"
+                           rel="prev">‹ Trước</a>
+                    </li>
+                }
+
+                @for (var p = Math.Max(1, Model.Page - 2); p <= Math.Min(Model.TotalPages, Model.Page + 2); p++)
+                {
+                    <li class="page-item @(p == Model.Page ? "active" : "")">
+                        <a class="page-link" asp-action="Index"
+                           asp-route-page="@p"
+                           asp-route-q="@Context.Request.Query["q"]"
+                           asp-route-sort="@Context.Request.Query["sort"]">@p</a>
+                    </li>
+                }
+
+                @if (Model.HasNextPage)
+                {
+                    <li class="page-item">
+                        <a class="page-link" asp-action="Index"
+                           asp-route-page="@(Model.Page + 1)"
+                           asp-route-q="@Context.Request.Query["q"]"
+                           asp-route-sort="@Context.Request.Query["sort"]"
+                           rel="next">Sau ›</a>
+                    </li>
+                }
+            </ul>
+        </nav>
+    }
+}
+else
+{
+    <div class="text-center py-5 text-muted">
+        <svg width="64" height="64" fill="currentColor" viewBox="0 0 20 20" class="mb-3 opacity-25">
+            <path d="M17 5.923A1 1 0 0 0 16 5h-3V4a4 4 0 1 0-8 0v1H2a1 1 0 0 0-1 .923L.086 17.846A2 2 0 0 0 2.08 20h13.84a2 2 0 0 0 1.994-2.153L17 5.923Z"/>
+        </svg>
+        <p class="mb-2">Không tìm thấy sản phẩm nào.</p>
+        <a asp-action="Index" class="btn btn-sm btn-outline-primary">Xem tất cả</a>
+    </div>
+}
+</div>

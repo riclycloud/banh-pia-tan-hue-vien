@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Template — Data từ API như trang chủ</title>
+    <link rel="stylesheet" href="/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="/css/site.min.css" />
+    <style>
+        .template-placeholder { min-height: 120px; display: flex; align-items: center; justify-content: center; background: #f5f5f5; border-radius: 8px; color: #666; }
+        .template-error { color: #c62828; padding: 1rem; }
+    </style>
+</head>
+<body>
+    <div class="hd-container py-5">
+        <h1 class="mb-4">Template — Data gọi bằng jQuery (giống trang chủ)</h1>
+
+        <!-- 1. Sản phẩm nổi bật (8) — tương ứng FeaturedProducts -->
+        <section class="ac-section mb-5" aria-label="Sản phẩm nổi bật">
+            <h2 class="ac-section-title ac-section-title--red mb-3">SẢN PHẨM NỔI BẬT (API)</h2>
+            <div id="promo-grid" class="ac-promos__grid">
+                <div class="template-placeholder">Đang tải...</div>
+            </div>
+        </section>
+
+        <!-- 2. Danh mục sản phẩm + Sản phẩm (24) — tabs + list + detail -->
+        <section class="ac-section ac-products-section mb-5" aria-labelledby="products-title">
+            <h2 class="ac-section-title ac-section-title--red" id="products-title">SẢN PHẨM THEO DANH MỤC</h2>
+            <div class="ac-cat-tabs mb-3" data-tab-group="products" id="category-tabs">
+                <button class="ac-cat-tab active" data-tab="all">TẤT CẢ</button>
+            </div>
+            <div class="ac-products-browser">
+                <div class="ac-brand-selector" id="productSelectorList"></div>
+                <div class="ac-product-detail" id="productDetail">
+                    <div class="ac-product-detail__hero" id="productDetailHero" style="background:linear-gradient(135deg,#eec976,#9a7e2e88)">
+                        <div id="prodDetailImg" class="ac-product-detail__mock">
+                            <img id="prodDetailImgEl" src="" alt="" style="display:none" />
+                            <div class="ac-product-detail__mock-label" id="prodDetailAbbr">--</div>
+                        </div>
+                        <div class="ac-product-detail__info">
+                            <h3 id="prodDetailName" class="ac-product-detail__name">Chọn sản phẩm</h3>
+                            <p id="prodDetailDesc" class="ac-product-detail__desc"></p>
+                        </div>
+                        <a href="#" class="ac-product-detail__link" id="prodDetailLink">Xem chi tiết <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Bài viết mới (4) -->
+        <section class="ac-section mb-5" aria-label="Tin tức">
+            <h2 class="ac-section-title ac-section-title--red mb-3">TIN MỚI (API)</h2>
+            <div id="recent-posts" class="row g-3">
+                <div class="template-placeholder col-12">Đang tải...</div>
+            </div>
+        </section>
+    </div>
+
+    <script src="/lib/jquery/dist/jquery.min.js"></script>
+    <script>
+    (function($) {
+        'use strict';
+
+        // Base URL API (để chạy từ file hoặc domain khác, đổi thành URL đầy đủ: 'https://yoursite.com')
+        var API_BASE = '';
+
+        var brandColors = ['#eec976', '#37474f', '#2e7d32', '#f57f17', '#b71c1c', '#880e4f', '#6d4c41', '#558b2f', '#6a1b9a', '#1565c0', '#c62828'];
+
+        function apiGet(path, params) {
+            var url = API_BASE + path;
+            return $.get(url, params || {}).then(function(data) { return data; });
+        }
+
+        // ── Load tất cả data như trang chủ ──
+        function loadHomeData() {
+            return $.when(
+                apiGet('/api/products', { page: 1, pageSize: 8, sort: 'newest' }),
+                apiGet('/api/product-categories'),
+                apiGet('/api/products', { page: 1, pageSize: 24, sort: 'newest' }),
+                apiGet('/api/posts', { page: 1, pageSize: 4 })
+            ).then(function(featuredRes, categoriesRes, productsRes, postsRes) {
+                var featured = featuredRes[0] && featuredRes[0].items ? featuredRes[0].items : [];
+                var categories = (categoriesRes[0] || []).filter(function(c) { return (c.productCount || 0) > 0; });
+                var products = productsRes[0] && productsRes[0].items ? productsRes[0].items : [];
+                var posts = postsRes[0] && postsRes[0].items ? postsRes[0].items : [];
+                return { featured: featured, categories: categories, products: products, posts: posts };
+            });
+        }
+
+        function renderPromo(featured) {
+            var $grid = $('#promo-grid').empty();
+            if (!featured || featured.length === 0) {
+                $grid.append('<p class="template-placeholder">Chưa có sản phẩm.</p>');
+                return;
+            }
+            var first = featured[0];
+            var catSlug = first.categorySlug || 'san-pham';
+            var bigCard = '<a href="/' + catSlug + '/' + first.slug + '" class="ac-promo-card ac-promo-card--lg">' +
+                '<div class="ac-promo-card__content">' +
+                '<p class="ac-promo-card__sub">Đặc sản Sóc Trăng</p>' +
+                '<h2 class="ac-promo-card__big">' + escapeHtml(first.name) + '</h2>' +
+                '<p class="ac-promo-card__desc">' + escapeHtml(first.shortDescription || '') + '</p></div>' +
+                (first.primaryImageUrl ? '<img src="' + escapeAttr(first.primaryImageUrl) + '" alt="' + escapeAttr(first.primaryImageAlt || first.name) + '" class="ac-promo-card__img-lg" loading="lazy" />' :
+                    '<div class="ac-promo-card__img-lg" style="background:linear-gradient(135deg,#eec976,#9a7e2e);min-height:200px;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.8);font-size:2rem;">' + (first.name ? first.name.substring(0, 2).toUpperCase() : 'SP') + '</div>') +
+                '</a>';
+            $grid.append(bigCard);
+            var delay = 100;
+            featured.slice(1, 4).forEach(function(p) {
+                var bg = (delay % 300 === 0) ? 'linear-gradient(135deg,#ffebee,#ffcdd2)' : (delay % 200 === 0 ? 'linear-gradient(135deg,#e8f5e9,#c8e6c9)' : 'linear-gradient(135deg,#fff8e1,#ffe082)');
+                var label = p.isNew ? '<p class="ac-promo-card__label">Mới</p>' : (p.isPromotion ? '<p class="ac-promo-card__label">Khuyến mãi</p>' : '');
+                var slug = (p.categorySlug || 'san-pham') + '/' + p.slug;
+                var card = '<a href="/' + slug + '" class="ac-promo-card ac-promo-card--sm" data-reveal-delay="' + delay + '" style="background:' + bg + '">' +
+                    '<div class="ac-promo-card__top">' + label + '<h3 class="ac-promo-card__title">' + escapeHtml(p.name) + '</h3></div>' +
+                    (p.primaryImageUrl ? '<img src="' + escapeAttr(p.primaryImageUrl) + '" alt="' + escapeAttr(p.primaryImageAlt || p.name) + '" class="ac-promo-card__img" loading="lazy" />' :
+                        '<div class="ac-promo-card__img" style="background:rgba(255,255,255,0.2);min-height:120px;display:flex;align-items:center;justify-content:center;font-weight:bold;">' + (p.name ? p.name.substring(0, 2).toUpperCase() : 'SP') + '</div>') +
+                    '</a>';
+                $grid.append(card);
+                delay += 100;
+            });
+        }
+
+        function escapeHtml(s) {
+            if (!s) return '';
+            var d = document.createElement('div');
+            d.textContent = s;
+            return d.innerHTML;
+        }
+        function escapeAttr(s) {
+            if (!s) return '';
+            return String(s)
+                .replace(/&/g, '&amp;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+        }
+
+        function renderCategoriesAndProducts(categories, products) {
+            var $tabs = $('#category-tabs');
+            $tabs.find('.ac-cat-tab:not([data-tab="all"])').remove();
+            (categories || []).forEach(function(c) {
+                $tabs.append('<button class="ac-cat-tab" data-tab="' + escapeAttr(c.slug || '') + '">' + escapeHtml((c.name || '').toUpperCase()) + '</button>');
+            });
+
+            var $list = $('#productSelectorList').empty();
+            products.forEach(function(p, i) {
+                var abbr = (p.name && p.name.length >= 2) ? p.name.substring(0, 2).toUpperCase() : 'SP';
+                var color = brandColors[i % brandColors.length];
+                var detailUrl = '/' + (p.categorySlug || 'san-pham') + '/' + p.slug;
+                var logoHtml = p.primaryImageUrl
+                    ? '<img src="' + escapeAttr(p.primaryImageUrl) + '" alt="' + escapeAttr(p.primaryImageAlt || p.name) + '" width="48" height="48" loading="lazy" />'
+                    : '<strong>' + escapeHtml(abbr) + '</strong>';
+                var btn = '<button type="button" class="ac-brand-item' + (i === 0 ? ' active' : '') + '" ' +
+                    'data-category-slug="' + escapeAttr(p.categorySlug || '') + '" data-name="' + escapeAttr(p.name || '') + '" ' +
+                    'data-desc="' + escapeAttr(p.shortDescription || '') + '" data-url="' + escapeAttr(detailUrl) + '" ' +
+                    'data-image="' + escapeAttr(p.primaryImageUrl || '') + '" data-image-alt="' + escapeAttr(p.primaryImageAlt || p.name || '') + '" ' +
+                    'data-color="' + color + '" data-abbr="' + escapeAttr(abbr) + '">' +
+                    '<div class="ac-brand-item__logo" style="background:' + color + ';color:white">' + logoHtml + '</div>' +
+                    '<span>' + escapeHtml(p.name || '') + '</span></button>';
+                $list.append(btn);
+            });
+
+            // Tab filter
+            $tabs.off('click').on('click', '.ac-cat-tab', function() {
+                var tab = $(this);
+                $tabs.find('.ac-cat-tab').removeClass('active');
+                tab.addClass('active');
+                var slug = (tab.data('tab') || '').toLowerCase();
+                var isAll = !slug || slug === 'all';
+                $list.find('.ac-brand-item').each(function() {
+                    var cat = ($(this).data('category-slug') || '').toLowerCase();
+                    $(this).toggle(isAll || cat === slug);
+                });
+            });
+
+            // Product click -> detail panel
+            var $hero = $('#productDetailHero'), $name = $('#prodDetailName'), $desc = $('#prodDetailDesc'), $link = $('#prodDetailLink');
+            var $imgEl = $('#prodDetailImgEl'), $abbr = $('#prodDetailAbbr');
+            $list.off('click').on('click', '.ac-brand-item', function() {
+                var btn = $(this);
+                $list.find('.ac-brand-item').removeClass('active');
+                btn.addClass('active');
+                var name = btn.data('name') || '';
+                var desc = btn.data('desc') || '';
+                var url = btn.data('url') || '#';
+                var image = btn.data('image') || '';
+                var imageAlt = btn.data('image-alt') || name;
+                var color = btn.data('color') || '#eec976';
+                var abbr = btn.data('abbr') || 'SP';
+                $hero.css('background', 'linear-gradient(135deg,' + color + ',' + color + '88)');
+                $name.text(name);
+                $desc.text(desc);
+                $link.attr('href', url).toggle(url !== '#');
+                if (image) {
+                    $imgEl.attr('src', image).attr('alt', imageAlt).show();
+                    $abbr.hide();
+                } else {
+                    $imgEl.hide();
+                    $abbr.text(abbr).show();
+                }
+            });
+
+            // Select first product in detail
+            var first = products[0];
+            if (first) {
+                $hero.css('background', 'linear-gradient(135deg,' + (brandColors[0] || '#eec976') + ',' + (brandColors[0] || '#eec976') + '88)');
+                $name.text(first.name || 'Chọn sản phẩm');
+                $desc.text(first.shortDescription || '');
+                $link.attr('href', '/' + (first.categorySlug || 'san-pham') + '/' + first.slug).show();
+                if (first.primaryImageUrl) {
+                    $imgEl.attr('src', first.primaryImageUrl).attr('alt', first.primaryImageAlt || first.name).show();
+                    $abbr.hide();
+                } else {
+                    $imgEl.hide();
+                    $abbr.text((first.name && first.name.length >= 2) ? first.name.substring(0, 2).toUpperCase() : 'SP').show();
+                }
+            }
+        }
+
+        function renderPosts(posts) {
+            var $block = $('#recent-posts').empty();
+            if (!posts || posts.length === 0) {
+                $block.append('<p class="template-placeholder">Chưa có bài viết.</p>');
+                return;
+            }
+            posts.forEach(function(post) {
+                var url = '/bai-viet/' + (post.categorySlug || 'tin-tuc') + '/' + (post.slug || '');
+                var card = '<div class="col-md-6 col-lg-3"><article class="card h-100">' +
+                    (post.featuredImageUrl ? '<img src="' + escapeAttr(post.featuredImageUrl) + '" class="card-img-top" alt="' + escapeAttr(post.featuredImageAlt || post.title || '') + '" loading="lazy" />' : '') +
+                    '<div class="card-body"><h3 class="card-title h6">' + escapeHtml(post.title || '') + '</h3>' +
+                    '<p class="card-text small text-muted">' + escapeHtml(post.excerpt || '') + '</p>' +
+                    '<a href="' + escapeAttr(url) + '" class="btn btn-sm btn-outline-primary">Xem</a></div></article></div>';
+                $block.append(card);
+            });
+        }
+
+        $(function() {
+            loadHomeData()
+                .then(function(data) {
+                    renderPromo(data.featured);
+                    renderCategoriesAndProducts(data.categories, data.products);
+                    renderPosts(data.posts);
+                })
+                .fail(function(xhr) {
+                    var msg = 'Không tải được dữ liệu. ';
+                    if (xhr && xhr.status === 0) msg += 'Kiểm tra CORS hoặc mở trang từ cùng domain (ví dụ /template.html).';
+                    else if (xhr && xhr.status) msg += 'HTTP ' + xhr.status;
+                    $('#promo-grid').html('<p class="template-error">' + msg + '</p>');
+                    $('#productSelectorList').closest('.ac-products-browser').find('.ac-brand-selector').siblings().andSelf().find('.template-placeholder').remove();
+                    $('#recent-posts').html('<p class="template-error">' + msg + '</p>');
+                });
+        });
+    })(jQuery);
+    </script>
+</body>
+</html>

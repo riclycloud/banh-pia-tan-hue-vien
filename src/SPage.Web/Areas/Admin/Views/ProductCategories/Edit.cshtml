@@ -1,0 +1,214 @@
+@model SPage.Areas.Admin.Controllers.ProductCategoryEditModel
+@{
+    ViewData["Title"] = "Sửa chuyên mục sản phẩm";
+}
+
+<div class="flex items-center gap-2 mb-5 text-sm">
+    <a asp-action="Index" class="text-slate-400 hover:text-blue-600 transition-colors">Chuyên mục sản phẩm</a>
+    <svg class="w-3.5 h-3.5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m9 18 6-6-6-6" />
+    </svg>
+    <span class="text-slate-600 font-medium truncate max-w-xs">@Model.Name</span>
+    <span class="ml-2 px-2 py-0.5 rounded-full bg-slate-100 text-[11px] font-mono text-slate-500">@Model.Id</span>
+</div>
+
+<form asp-action="Edit" asp-route-id="@Model.Id" method="post">
+    @Html.AntiForgeryToken()
+    <input asp-for="Id" type="hidden" />
+
+    <div class="grid grid-cols-1 gap-5 lg:grid-cols-3">
+        @* ── Main Content ── *@
+        <div class="lg:col-span-2 space-y-4">
+
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-4">
+                <div>
+                    <label asp-for="Name" class="block mb-1.5 text-[13px] font-medium text-slate-600">
+                        Tên chuyên mục <span class="text-red-500">*</span>
+                    </label>
+                    <input asp-for="Name" required
+                           class="block w-full px-3 py-2.5 text-sm bg-white border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" />
+                    <span asp-validation-for="Name" class="text-xs text-red-500 mt-1 block"></span>
+                </div>
+                <div>
+                    <label asp-for="Slug" class="block mb-1.5 text-[13px] font-medium text-slate-600">Slug (URL)</label>
+                    <input asp-for="Slug" placeholder="vd: banh-pia-truyen-thong (để trống giữ nguyên)"
+                           class="block w-full px-3 py-2.5 text-sm bg-white border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" />
+                    <span class="text-xs text-slate-400 mt-1 block">Đường dẫn: domain.com/<span class="font-mono">@(Model.Slug ?? "slug")</span></span>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+                <label asp-for="Description" class="block mb-1.5 text-[13px] font-medium text-slate-600">Mô tả</label>
+                <textarea asp-for="Description" id="description-editor" rows="10"
+                          data-upload-url="@Url.Action("UploadImage", "Media", new { area = "Admin" })"
+                          class="block w-full px-3 py-2.5 text-sm bg-white border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"></textarea>
+            </div>
+
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+                <h3 class="text-sm font-semibold text-slate-700 mb-4">Tối ưu hóa SEO</h3>
+                <div class="space-y-4">
+                    <div>
+                        <label asp-for="MetaTitle" class="block mb-1.5 text-[13px] font-medium text-slate-600">
+                            Meta Title <span class="text-slate-400 font-normal">(tối đa 70 ký tự)</span>
+                        </label>
+                        <input asp-for="MetaTitle" id="meta-title" maxlength="70"
+                               class="block w-full px-3 py-2.5 text-sm bg-white border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" />
+                        <div class="flex justify-between mt-1">
+                            <span asp-validation-for="MetaTitle" class="text-xs text-red-500"></span>
+                            <span id="meta-title-count" class="text-xs text-slate-400">0/70</span>
+                        </div>
+                    </div>
+                    <div>
+                        <label asp-for="MetaDescription" class="block mb-1.5 text-[13px] font-medium text-slate-600">
+                            Meta Description <span class="text-slate-400 font-normal">(tối đa 160 ký tự)</span>
+                        </label>
+                        <textarea asp-for="MetaDescription" id="meta-desc" rows="2" maxlength="160"
+                                  class="block w-full px-3 py-2.5 text-sm bg-white border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"></textarea>
+                        <div class="flex justify-between mt-1">
+                            <span asp-validation-for="MetaDescription" class="text-xs text-red-500"></span>
+                            <span id="meta-desc-count" class="text-xs text-slate-400">0/160</span>
+                        </div>
+                    </div>
+                    <div>
+                        <label asp-for="CanonicalUrl" class="block mb-1.5 text-[13px] font-medium text-slate-600">Canonical URL</label>
+                        <input asp-for="CanonicalUrl"
+                               class="block w-full px-3 py-2.5 text-sm bg-white border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" />
+                    </div>
+                    <div class="flex items-center gap-2.5 pt-1">
+                        <input asp-for="IsIndexable" type="checkbox"
+                               class="w-4 h-4 accent-blue-600 border-slate-300 rounded" />
+                        <label asp-for="IsIndexable" class="text-[13px] text-slate-600 cursor-pointer">
+                            Cho phép Google index chuyên mục này
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        @* ── Sidebar ── *@
+        <div class="space-y-4">
+
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+                <h3 class="text-sm font-semibold text-slate-700 mb-4">Cấu trúc</h3>
+                <div>
+                    <label asp-for="ParentId" class="block mb-1.5 text-[13px] font-medium text-slate-600">Chuyên mục cha</label>
+                    <select asp-for="ParentId" asp-items="ViewBag.ParentCategories"
+                            class="block w-full px-3 py-2.5 text-sm bg-white border border-slate-200 rounded-xl text-slate-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                        <option value="">-- Không có --</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+                <h3 class="text-sm font-semibold text-slate-700 mb-4">Ảnh đại diện</h3>
+                <div class="space-y-2.5">
+                    <input type="hidden" asp-for="ThumbnailUrl" id="thumbnail-image-url" />
+                    <img id="thumbnail-image-preview" src="@Model.ThumbnailUrl" alt="Preview"
+                         class="@(string.IsNullOrEmpty(Model.ThumbnailUrl) ? "hidden" : "") w-full h-auto mt-2 rounded-xl border border-slate-200 object-cover" />
+                    <input asp-for="ThumbnailAlt" placeholder="Alt text của ảnh"
+                           class="block w-full px-3 py-2.5 text-sm bg-white border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" />
+                    <input type="file" id="thumbnail-image-file" accept="image/*" class="hidden"
+                           data-upload-url="@Url.Action("UploadImage", "Media", new { area = "Admin" })" />
+                    <button type="button"
+                            class="inline-flex items-center gap-2 px-3 py-2 text-xs font-medium text-slate-700 bg-slate-100 rounded-xl hover:bg-slate-200 transition-colors"
+                            onclick="document.getElementById('thumbnail-image-file').click()">
+                        <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 0 1 2.828 0L16 16m-2-2 1.586-1.586a2 2 0 0 1 2.828 0L20 14m-6-8h.01M6 20h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2z" />
+                        </svg>
+                        Upload ảnh
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
+                <div class="flex gap-2">
+                    <button type="submit"
+                            class="flex-1 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-colors shadow-sm">
+                        Cập nhật
+                    </button>
+                    <a asp-action="Index"
+                       class="px-4 py-2 text-sm font-medium text-slate-600 bg-slate-100 rounded-xl hover:bg-slate-200 transition-colors">
+                        Hủy
+                    </a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</form>
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/7.1.1/tinymce.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            function initCounter(inputId, countId, max) {
+                const input = document.getElementById(inputId);
+                const count = document.getElementById(countId);
+                if (input && count) {
+                    const update = () => count.textContent = `${input.value.length}/${max}`;
+                    input.addEventListener('input', update);
+                    update();
+                }
+            }
+            initCounter('meta-title', 'meta-title-count', 70);
+            initCounter('meta-desc', 'meta-desc-count', 160);
+
+            function uploadImageField(inputId, urlId, previewId) {
+                const fileInput = document.getElementById(inputId);
+                const urlInput = document.getElementById(urlId);
+                const previewImg = document.getElementById(previewId);
+                const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+                if (!fileInput) return;
+                const url = fileInput.getAttribute('data-upload-url');
+                fileInput.addEventListener('change', async () => {
+                    const file = fileInput.files[0];
+                    if (!file || !url) return;
+                    const formData = new FormData();
+                    formData.append('upload', file);
+                    try {
+                        const headers = {};
+                        if (token) headers['RequestVerificationToken'] = token;
+                        const response = await fetch(url, { method: 'POST', body: formData, headers });
+                        if (!response.ok) throw new Error(response.statusText);
+                        const data = await response.json();
+                        if (data && data.url) {
+                            if (urlInput) urlInput.value = data.url;
+                            if (previewImg) { previewImg.src = data.url; previewImg.classList.remove('hidden'); }
+                        }
+                    } catch (e) { alert('Upload lỗi: ' + e); }
+                    finally { fileInput.value = ''; }
+                });
+            }
+            uploadImageField('thumbnail-image-file', 'thumbnail-image-url', 'thumbnail-image-preview');
+
+            const editorEl = document.querySelector('#description-editor');
+            const uploadUrl = editorEl?.getAttribute('data-upload-url');
+            const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+            if (editorEl) {
+                tinymce.init({
+                    selector: '#description-editor', height: 400, menubar: false,
+                    plugins: ['advlist', 'autolink', 'lists', 'link', 'image', 'preview', 'code'],
+                    toolbar: 'undo redo | blocks | bold italic | alignleft aligncenter alignright | bullist numlist | image link | code preview',
+                    images_upload_handler: uploadUrl ? (blobInfo, progress) => new Promise((resolve, reject) => {
+                        const xhr = new XMLHttpRequest();
+                        xhr.open('POST', uploadUrl);
+                        if (token) xhr.setRequestHeader('RequestVerificationToken', token);
+                        xhr.upload.onprogress = (e) => progress(e.loaded / e.total * 100);
+                        xhr.onload = () => {
+                            if (xhr.status < 200 || xhr.status >= 300) { reject('HTTP Error: ' + xhr.status); return; }
+                            const json = JSON.parse(xhr.responseText);
+                            if (!json || typeof json.url != 'string') { reject('Invalid JSON'); return; }
+                            resolve(json.url);
+                        };
+                        xhr.onerror = () => reject('Image upload failed.');
+                        const formData = new FormData();
+                        formData.append('upload', blobInfo.blob(), blobInfo.filename());
+                        xhr.send(formData);
+                    }) : undefined,
+                    setup: (editor) => { editor.on('change', () => editor.save()); }
+                });
+            }
+        });
+    </script>
+}
