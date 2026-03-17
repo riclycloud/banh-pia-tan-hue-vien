@@ -163,7 +163,7 @@
    1. HERO
 ══════════════════════════════════════════════════════════ */
 .ac-hero {
-    background: linear-gradient(135deg, #aa4b13 0%, #685705 100%);
+    background: linear-gradient(135deg, #d87428 0%, #ebc47e 100%);
     position: relative;
     overflow: hidden;
     padding: var(--spacing-16) 0 0;
@@ -196,7 +196,7 @@
 }
 
 .ac-hero__badge-logo {
-    height: clamp(100px, 16vw, 190px);
+    height: clamp(100px, 16vw, 270px);
     width: auto;
     display: block;
     filter: drop-shadow(0 4px 16px rgba(0, 0, 0, .35));

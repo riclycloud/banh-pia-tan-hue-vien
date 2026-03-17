@@ -2,13 +2,13 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
-COPY ["SPage.sln", "./"]
+COPY ["TanHueVien.sln", "./"]
 COPY ["src/SPage.Web/SPage.Web.csproj", "src/SPage.Web/"]
 COPY ["src/SPage.Application/SPage.Application.csproj", "src/SPage.Application/"]
 COPY ["src/SPage.Domain/SPage.Domain.csproj", "src/SPage.Domain/"]
 COPY ["src/SPage.Infrastructure/SPage.Infrastructure.csproj", "src/SPage.Infrastructure/"]
 
-RUN dotnet restore "SPage.sln"
+RUN dotnet restore "TanHueVien.sln"
 
 COPY . .
 RUN dotnet publish "src/SPage.Web/SPage.Web.csproj" -c Release -o /app/publish /p:UseAppHost=false --no-restore

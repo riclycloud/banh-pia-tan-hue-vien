@@ -13,7 +13,7 @@ body{font-family:var(--font-sans);color:var(--color-text);background:var(--color
 ══════════════════════════════════════════════════════════ */
 .site-header{
     position:fixed;top:0;left:0;right:0;z-index:1000;
-    background:linear-gradient(135deg,#aa4b13 0%,#685705 100%);
+    background:linear-gradient(135deg,#d87428 0%,#ebc47e 100%);
     transition:transform .3s ease,box-shadow .3s ease;
 }
 .site-header.scrolled{box-shadow:0 4px 24px rgba(0,0,0,.35)}
@@ -266,7 +266,7 @@ details.mobile-nav-group[open]>summary .mobile-nav-group__arrow{transform:rotate
 /* ══════════════════════════════════════════════════════════
    FOOTER
 ══════════════════════════════════════════════════════════ */
-.site-footer{background:#1a1506}
+.site-footer{background:linear-gradient(135deg,#d87428 0%,#e7bb69 100%)}
 .site-footer__body{padding:var(--spacing-16) 0 var(--spacing-12)}
 .footer-grid{
     display:grid;
